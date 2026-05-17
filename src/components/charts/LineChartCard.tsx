@@ -54,7 +54,7 @@ export default function LineChartCard({
           />
           <Tooltip
             formatter={(v: unknown) => [formatCurrency(Number(v)), 'Sprzedaż']}
-            labelFormatter={fmtDate}
+            labelFormatter={(d: unknown) => fmtDate(String(d))}
             contentStyle={{ borderRadius: 12, fontSize: 13 }}
           />
           <Line

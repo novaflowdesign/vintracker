@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Package, Pencil, Trash2, X, Search } from 'lucide-react'
-import { toast } from 'sonner'
 import Button from '../../components/Button'
 import SellModal from './SellModal'
 import EditItemModal from './EditItemModal'
@@ -80,12 +79,10 @@ export function CardSkeleton() {
 
 function BundleChildRow({
   child,
-  bundleId,
   onSell,
   onEdit,
 }: {
   child: Item
-  bundleId: string
   onSell: () => void
   onEdit: () => void
 }) {
@@ -177,7 +174,6 @@ function BundleCard({
                 <BundleChildRow
                   key={child.id}
                   child={child}
-                  bundleId={item.id}
                   onSell={() => { setSellChild(child); setShowOverlay(false) }}
                   onEdit={() => { setEditChild(child); setShowOverlay(false) }}
                 />

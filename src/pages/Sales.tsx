@@ -7,7 +7,6 @@ import { totalRevenue, totalProfit, itemProfit } from '../features/stats/selecto
 import {
   getCurrentQuarter,
   getQuarterRange,
-  getQuarterLabel,
 } from '../lib/legal'
 import { formatCurrency, formatDate } from '../utils/format'
 import { CATEGORIES } from '../lib/constants'

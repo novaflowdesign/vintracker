@@ -45,7 +45,8 @@ export default function AddItem() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  const form = useForm<ItemFormData>({ resolver: zodResolver(itemSchema) })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
   const watchedPrice = form.watch('purchase_price')
   const totalPrice = Number(watchedPrice) || 0
   const unitPrice = isBundle && bundleSize >= 2 ? totalPrice / bundleSize : null

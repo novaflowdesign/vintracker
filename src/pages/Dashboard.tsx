@@ -34,7 +34,7 @@ import {
   getQuarterLabel,
   daysLeftInQuarter,
 } from '../lib/legal'
-import { formatCurrency, formatDate, daysSince } from '../utils/format'
+import { formatCurrency, formatDate } from '../utils/format'
 import type { Item } from '../types/item'
 
 // ── mini thumbnail ────────────────────────────────────────────────────────────
@@ -68,19 +68,6 @@ function SaleRow({ item }: { item: Item }) {
   )
 }
 
-function ShelfRow({ item }: { item: Item }) {
-  const days = daysSince(item.purchase_date)
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <MiniPhoto path={item.photo_path} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-        <p className="text-xs text-slate-400">{item.category ?? '—'}</p>
-      </div>
-      <p className="text-sm text-slate-500 shrink-0">{days} dni</p>
-    </div>
-  )
-}
 
 // ── skeletons ─────────────────────────────────────────────────────────────────
 

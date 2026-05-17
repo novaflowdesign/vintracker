@@ -1,4 +1,5 @@
 import { NavLink, Link, Outlet } from 'react-router-dom'
+import InstallPrompt from './InstallPrompt'
 import {
   LayoutDashboard,
   Package,
@@ -66,6 +67,8 @@ export default function Layout() {
       <main className="flex-1 md:ml-56 pb-20 md:pb-0">
         <Outlet />
       </main>
+
+      <InstallPrompt />
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around items-center h-16 z-50">

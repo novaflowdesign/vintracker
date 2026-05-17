@@ -34,8 +34,9 @@ export default function SellModal({ item, open, onClose }: Props) {
     watch,
     reset,
     formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = useForm<FormData, unknown, FormData>({
+    resolver: zodResolver(schema) as any,
     defaultValues: { sale_date: today },
   })
 

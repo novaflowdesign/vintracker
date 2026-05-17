@@ -25,8 +25,9 @@ export default function EditItemModal({ item, open, onClose }: Props) {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const form = useForm<ItemFormData>({
-    resolver: zodResolver(itemSchema),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = useForm<ItemFormData, unknown, ItemFormData>({
+    resolver: zodResolver(itemSchema) as any,
   })
 
   useEffect(() => {
