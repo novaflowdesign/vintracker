@@ -41,6 +41,8 @@ export interface Item {
   shipping_cost_paid_by_seller: number
   buyer_country: string | null
   notes: string | null
+  bundle_id: string | null
+  bundle_size: number | null
   created_at: string
   updated_at: string
 }

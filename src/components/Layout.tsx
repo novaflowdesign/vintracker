@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Link, Outlet } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -24,9 +24,10 @@ export default function Layout() {
     <div className="min-h-screen bg-gray-50 md:flex">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white border-r border-gray-200 px-3 py-6">
-        <div className="px-4 mb-8">
-          <span className="text-lg font-bold text-emerald-600">Vintracker</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2.5 px-4 mb-8">
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="w-8 h-8 rounded-lg shrink-0" />
+          <span className="text-base font-semibold text-slate-900">Vintracker</span>
+        </Link>
 
         <nav className="flex flex-col gap-1 flex-1">
           {links.map(({ to, icon: Icon, label, end }) => (

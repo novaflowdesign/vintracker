@@ -21,5 +21,9 @@ export function formatDate(date: string | Date): string {
 
 export function daysSince(date: string | Date): number {
   const ms = Date.now() - new Date(date).getTime()
-  return Math.floor(ms / 86_400_000)
+  return Math.floor(ms / 86_400_000) + 1
+}
+
+export function formatPercent(value: number): string {
+  return `${value.toFixed(1).replace('.', ',')}%`
 }

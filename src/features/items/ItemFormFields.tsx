@@ -10,9 +10,10 @@ const today = new Date().toISOString().split('T')[0]
 
 interface Props {
   form: UseFormReturn<ItemFormData>
+  priceLabelOverride?: string
 }
 
-export default function ItemFormFields({ form }: Props) {
+export default function ItemFormFields({ form, priceLabelOverride }: Props) {
   const {
     register,
     watch,
@@ -65,7 +66,7 @@ export default function ItemFormFields({ form }: Props) {
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Cena zakupu *"
+          label={priceLabelOverride ?? 'Cena zakupu *'}
           type="number"
           min="0"
           step="0.01"

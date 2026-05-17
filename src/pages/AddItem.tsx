@@ -2,22 +2,27 @@ import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
-import { ImagePlus, X } from 'lucide-react'
+import { ImagePlus, X, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from '../components/Button'
+import Input from '../components/Input'
 import { itemSchema, type ItemFormData } from '../features/items/itemSchema'
 import ItemFormFields from '../features/items/ItemFormFields'
-import { useCreateItem, useUpdateItem } from '../features/items/queries'
+import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
+import { formatCurrency } from '../utils/format'
 
 export default function AddItem() {
   const navigate = useNavigate()
   const createItem = useCreateItem()
+  const createBundle = useCreateBundle()
   const updateItem = useUpdateItem()
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [isBundle, setIsBundle] = useState(false)
+  const [bundleSize, setBundleSize] = useState(2)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(
@@ -41,11 +46,14 @@ export default function AddItem() {
   }
 
   const form = useForm<ItemFormData>({ resolver: zodResolver(itemSchema) })
+  const watchedPrice = form.watch('purchase_price')
+  const totalPrice = Number(watchedPrice) || 0
+  const unitPrice = isBundle && bundleSize >= 2 ? totalPrice / bundleSize : null
 
   async function onSubmit(data: ItemFormData) {
     setSubmitting(true)
     try {
-      const item = await createItem.mutateAsync({
+      const input = {
         ...data,
         purchase_price:  Number(data.purchase_price),
         description:     data.description     || null,
@@ -55,20 +63,36 @@ export default function AddItem() {
         condition:       data.condition       || null,
         purchase_source: data.purchase_source || null,
         notes:           data.notes           || null,
-      })
-
-      if (photoFile) {
-        try {
-          const path = await uploadPhoto(item.id, photoFile)
-          await updateItem.mutateAsync({ id: item.id, patch: { photo_path: path } })
-        } catch {
-          toast.warning('Rzecz dodana, ale zdjęcie nie zostało przesłane.')
-          navigate('/inventory')
-          return
-        }
       }
 
-      toast.success('Rzecz dodana do magazynu!')
+      if (isBundle) {
+        const { parent } = await createBundle.mutateAsync({ input, bundleSize })
+        if (photoFile) {
+          try {
+            const path = await uploadPhoto(parent.id, photoFile)
+            await updateItem.mutateAsync({ id: parent.id, patch: { photo_path: path } })
+          } catch {
+            toast.warning('Zestaw dodany, ale zdjęcie nie zostało przesłane.')
+            navigate('/inventory')
+            return
+          }
+        }
+        toast.success(`Zestaw (${bundleSize} szt.) dodany do magazynu!`)
+      } else {
+        const item = await createItem.mutateAsync(input)
+        if (photoFile) {
+          try {
+            const path = await uploadPhoto(item.id, photoFile)
+            await updateItem.mutateAsync({ id: item.id, patch: { photo_path: path } })
+          } catch {
+            toast.warning('Rzecz dodana, ale zdjęcie nie zostało przesłane.')
+            navigate('/inventory')
+            return
+          }
+        }
+        toast.success('Rzecz dodana do magazynu!')
+      }
+
       navigate('/inventory')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Wystąpił błąd')
@@ -113,7 +137,41 @@ export default function AddItem() {
             )}
           </div>
 
-          <ItemFormFields form={form} />
+          {/* Bundle toggle */}
+          <label className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 cursor-pointer hover:border-violet-400 transition-colors">
+            <input
+              type="checkbox"
+              checked={isBundle}
+              onChange={e => setIsBundle(e.target.checked)}
+              className="w-4 h-4 accent-violet-600"
+            />
+            <Package size={18} className="text-violet-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Dodaj jako zestaw</p>
+              <p className="text-xs text-slate-400">Cena zostanie podzielona równo na każdy przedmiot</p>
+            </div>
+          </label>
+
+          {/* Bundle size input */}
+          {isBundle && (
+            <div className="bg-violet-50 rounded-xl p-4 space-y-3">
+              <Input
+                label="Liczba przedmiotów w zestawie"
+                type="number"
+                min={2}
+                max={200}
+                value={bundleSize}
+                onChange={e => setBundleSize(Math.max(2, parseInt(e.target.value) || 2))}
+              />
+              {unitPrice !== null && totalPrice > 0 && (
+                <p className="text-sm text-violet-700 font-medium">
+                  Cena za sztukę: {formatCurrency(unitPrice)}
+                </p>
+              )}
+            </div>
+          )}
+
+          <ItemFormFields form={form} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
 
           <div className="flex gap-3 pt-2">
             <Button
@@ -125,7 +183,7 @@ export default function AddItem() {
               Anuluj
             </Button>
             <Button type="submit" className="flex-1" loading={submitting}>
-              Dodaj do magazynu
+              {isBundle ? `Dodaj zestaw (${bundleSize} szt.)` : 'Dodaj do magazynu'}
             </Button>
           </div>
         </form>

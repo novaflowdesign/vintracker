@@ -36,11 +36,27 @@ export function usePhotoUrl(path: string | null) {
   })
 }
 
-// ── mutations ────────────────────────────────────────────────────────────────
+export function useBundleChildren(bundleId: string) {
+  return useQuery({
+    queryKey: [ITEMS_KEY, 'children', bundleId],
+    queryFn: () => api.listBundleChildren(bundleId),
+    enabled: !!bundleId,
+  })
+}
+
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 function invalidateItems(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: [ITEMS_KEY] })
 }
+
+function invalidateBundleChildren(qc: ReturnType<typeof useQueryClient>, bundleId: string | null) {
+  if (bundleId) {
+    qc.invalidateQueries({ queryKey: [ITEMS_KEY, 'children', bundleId] })
+  }
+}
+
+// ── mutations ────────────────────────────────────────────────────────────────
 
 export function useCreateItem() {
   const qc = useQueryClient()
@@ -50,12 +66,24 @@ export function useCreateItem() {
   })
 }
 
+export function useCreateBundle() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ input, bundleSize }: { input: api.NewItemInput; bundleSize: number }) =>
+      api.createBundle(input, bundleSize),
+    onSuccess: () => invalidateItems(qc),
+  })
+}
+
 export function useUpdateItem() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<Item> }) =>
       api.updateItem(id, patch),
-    onSuccess: () => invalidateItems(qc),
+    onSuccess: item => {
+      invalidateItems(qc)
+      invalidateBundleChildren(qc, item.bundle_id)
+    },
   })
 }
 
@@ -69,7 +97,10 @@ export function useMarkAsSold() {
       id: string
       sale: Parameters<typeof api.markAsSold>[1]
     }) => api.markAsSold(id, sale),
-    onSuccess: () => invalidateItems(qc),
+    onSuccess: item => {
+      invalidateItems(qc)
+      invalidateBundleChildren(qc, item.bundle_id)
+    },
   })
 }
 
