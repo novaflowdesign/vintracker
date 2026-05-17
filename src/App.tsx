@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './hooks/useAuth'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
@@ -11,6 +12,8 @@ import Settings from './pages/Settings'
 
 export default function App() {
   return (
+    <>
+    <Toaster richColors position="bottom-center" />
     <BrowserRouter basename="/vintracker">
       <AuthProvider>
         <Routes>
@@ -32,5 +35,6 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </>
   )
 }
