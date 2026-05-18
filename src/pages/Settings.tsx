@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
-import { LogOut, Download, Upload, Trash2, Sun, Moon } from 'lucide-react'
+import { LogOut, Download, Upload, Trash2, Sun, Moon, Eye, EyeOff, Plus, Pencil } from 'lucide-react'
+import { getGeminiKey, setGeminiKey } from '../lib/gemini'
+import { getTemplates, addTemplate, updateTemplate, deleteTemplate, type Template } from '../lib/templates'
 import clsx from 'clsx'
 import { useTheme } from '../context/ThemeContext'
 import { toast } from 'sonner'
@@ -12,6 +14,164 @@ import Button from '../components/Button'
 import { formatCurrency } from '../utils/format'
 import { QUARTERLY_LIMIT_PLN } from '../lib/legal'
 import type { Item } from '../types/item'
+
+// ── template form ─────────────────────────────────────────────────────────────
+
+type FormData = { name: string; titleTemplate: string; descTemplate: string }
+
+function TemplateForm({
+  data, onChange, onSave, onCancel,
+}: {
+  data: FormData
+  onChange: (d: FormData) => void
+  onSave: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="space-y-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+      <input
+        placeholder="Nazwa szablonu (np. Karty Pokemon)"
+        value={data.name}
+        onChange={e => onChange({ ...data, name: e.target.value })}
+        className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      />
+      <textarea
+        placeholder="Szablon tytułu (np. Pokemon TCG – [Nazwa Pokemona] [Skrót])"
+        value={data.titleTemplate}
+        onChange={e => onChange({ ...data, titleTemplate: e.target.value })}
+        rows={2}
+        className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+      />
+      <textarea
+        placeholder="Szablon opisu..."
+        value={data.descTemplate}
+        onChange={e => onChange({ ...data, descTemplate: e.target.value })}
+        rows={5}
+        className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none font-mono"
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={onSave}
+          className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 transition-colors"
+        >
+          Zapisz
+        </button>
+        <button
+          onClick={onCancel}
+          className="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-sm font-medium py-2 text-gray-700 dark:text-slate-200 transition-colors"
+        >
+          Anuluj
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── generator settings card ───────────────────────────────────────────────────
+
+function GeneratorCard() {
+  const [keyInput,  setKeyInput]  = useState(getGeminiKey)
+  const [showKey,   setShowKey]   = useState(false)
+  const [templates, setTemplates] = useState<Template[]>(getTemplates)
+  const [editId,    setEditId]    = useState<string | null>(null)
+  const [formData,  setFormData]  = useState<FormData>({ name: '', titleTemplate: '', descTemplate: '' })
+
+  function saveKey() {
+    setGeminiKey(keyInput)
+    toast.success('Klucz zapisany')
+  }
+
+  function startAdd() {
+    setEditId('new')
+    setFormData({ name: '', titleTemplate: '', descTemplate: '' })
+  }
+
+  function startEdit(t: Template) {
+    setEditId(t.id)
+    setFormData({ name: t.name, titleTemplate: t.titleTemplate, descTemplate: t.descTemplate })
+  }
+
+  function saveForm() {
+    if (!formData.name.trim() || !formData.titleTemplate.trim()) {
+      toast.error('Nazwa i szablon tytułu są wymagane')
+      return
+    }
+    if (editId === 'new') {
+      addTemplate(formData)
+    } else if (editId) {
+      updateTemplate(editId, formData)
+    }
+    setTemplates(getTemplates())
+    setEditId(null)
+  }
+
+  function removeTemplate(id: string) {
+    deleteTemplate(id)
+    setTemplates(getTemplates())
+  }
+
+  return (
+    <Card title="Generator opisów">
+      {/* API key */}
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Klucz Gemini API</p>
+      <div className="flex gap-2 mb-5">
+        <div className="flex-1 relative">
+          <input
+            type={showKey ? 'text' : 'password'}
+            value={keyInput}
+            onChange={e => setKeyInput(e.target.value)}
+            placeholder="AIzaSy..."
+            className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-9"
+          />
+          <button
+            type="button"
+            onClick={() => setShowKey(v => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+          >
+            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        </div>
+        <Button variant="secondary" onClick={saveKey} className="shrink-0">Zapisz</Button>
+      </div>
+
+      {/* Templates */}
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Szablony</p>
+      <div className="space-y-2">
+        {templates.map(t => (
+          editId === t.id ? (
+            <TemplateForm key={t.id} data={formData} onChange={setFormData} onSave={saveForm} onCancel={() => setEditId(null)} />
+          ) : (
+            <div key={t.id} className="flex items-center justify-between px-3 py-2.5 bg-gray-50 dark:bg-slate-700 rounded-xl">
+              <span className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{t.name}</span>
+              <div className="flex gap-1 shrink-0 ml-2">
+                <button onClick={() => startEdit(t)} className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => removeTemplate(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          )
+        ))}
+
+        {editId === 'new' ? (
+          <TemplateForm data={formData} onChange={setFormData} onSave={saveForm} onCancel={() => setEditId(null)} />
+        ) : (
+          <button
+            onClick={startAdd}
+            className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl text-sm text-slate-400 hover:text-emerald-600 hover:border-emerald-500 transition-colors"
+          >
+            <Plus size={15} />
+            Dodaj szablon
+          </button>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+// ── card wrapper ──────────────────────────────────────────────────────────────
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -214,6 +374,8 @@ export default function Settings() {
           Usuń wszystkie moje dane
         </Button>
       </Card>
+
+      <GeneratorCard />
 
       <Card title="O aplikacji">
         <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1.5">
