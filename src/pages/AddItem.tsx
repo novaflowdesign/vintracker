@@ -103,14 +103,14 @@ export default function AddItem() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-8">
       <div className="mx-auto max-w-2xl px-4 pt-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">Dodaj rzecz</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Dodaj rzecz</h1>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Photo picker */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Zdjęcie</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
             {photoPreview ? (
               <div className="relative w-40 h-40 rounded-xl overflow-hidden">
                 <img src={photoPreview} alt="" className="w-full h-full object-cover" />
@@ -123,9 +123,9 @@ export default function AddItem() {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
-                <ImagePlus size={28} className="text-gray-400" />
-                <span className="text-xs text-gray-400 mt-2">Dodaj zdjęcie</span>
+              <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
+                <ImagePlus size={28} className="text-gray-400 dark:text-slate-500" />
+                <span className="text-xs text-gray-400 dark:text-slate-500 mt-2">Dodaj zdjęcie</span>
                 <input
                   ref={fileRef}
                   type="file"
@@ -138,7 +138,7 @@ export default function AddItem() {
           </div>
 
           {/* Bundle toggle */}
-          <label className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 cursor-pointer hover:border-violet-400 transition-colors">
+          <label className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer hover:border-violet-400 transition-colors">
             <input
               type="checkbox"
               checked={isBundle}
@@ -147,14 +147,14 @@ export default function AddItem() {
             />
             <Package size={18} className="text-violet-600 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-gray-900">Dodaj jako zestaw</p>
-              <p className="text-xs text-slate-400">Cena zostanie podzielona równo na każdy przedmiot</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Dodaj jako zestaw</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Cena zostanie podzielona równo na każdy przedmiot</p>
             </div>
           </label>
 
           {/* Bundle size input */}
           {isBundle && (
-            <div className="bg-violet-50 rounded-xl p-4 space-y-3">
+            <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-4 space-y-3">
               <Input
                 label="Liczba przedmiotów w zestawie"
                 type="number"
@@ -164,7 +164,7 @@ export default function AddItem() {
                 onChange={e => setBundleSize(Math.max(2, parseInt(e.target.value) || 2))}
               />
               {unitPrice !== null && totalPrice > 0 && (
-                <p className="text-sm text-violet-700 font-medium">
+                <p className="text-sm text-violet-700 dark:text-violet-400 font-medium">
                   Cena za sztukę: {formatCurrency(unitPrice)}
                 </p>
               )}
