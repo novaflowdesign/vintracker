@@ -14,8 +14,8 @@ export default function DonutChartCard({
   emptyText = 'Brak danych',
 }: DonutChartCardProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{title}</h3>
       {!data.length ? (
         <p className="text-sm text-slate-400 py-8 text-center">{emptyText}</p>
       ) : (
@@ -50,8 +50,8 @@ export default function DonutChartCard({
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: COLORS[i % COLORS.length] }}
                 />
-                <span className="text-xs text-gray-600">{entry.category}</span>
-                <span className="text-xs font-semibold text-gray-900">{entry.count}</span>
+                <span className="text-xs text-gray-600 dark:text-slate-400">{entry.category}</span>
+                <span className="text-xs font-semibold text-gray-900 dark:text-white">{entry.count}</span>
               </div>
             ))}
           </div>

@@ -12,6 +12,13 @@
     <title>Vintracker | śledzenie sprzedaży Vinted</title>
     <script>
       (function() {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    <script>
+      (function() {
         var redirect = sessionStorage.redirect;
         delete sessionStorage.redirect;
         if (redirect && redirect !== location.href) {

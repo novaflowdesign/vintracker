@@ -3,8 +3,8 @@ import clsx from 'clsx'
 
 const VARIANTS = {
   primary:   'bg-emerald-600 hover:bg-emerald-700 text-white',
-  secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700',
-  ghost:     'hover:bg-gray-100 text-gray-600',
+  secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200',
+  ghost:     'hover:bg-gray-100 text-gray-600 dark:hover:bg-slate-700 dark:text-slate-400',
   danger:    'bg-rose-600 hover:bg-rose-700 text-white',
 }
 

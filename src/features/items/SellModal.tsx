@@ -79,7 +79,7 @@ export default function SellModal({ item, open, onClose }: Props) {
     <Modal open={open} onClose={handleClose} title={isEdit ? 'Edytuj sprzedaż' : 'Oznacz jako sprzedane'}>
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
         {item && (
-          <p className="font-medium text-gray-900 truncate">{item.title}</p>
+          <p className="font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
         )}
 
         <Input
@@ -101,18 +101,18 @@ export default function SellModal({ item, open, onClose }: Props) {
 
 
         {/* Live preview */}
-        <div className="rounded-xl bg-gray-50 p-4 space-y-1 text-sm">
-          <div className="flex justify-between text-gray-600">
+        <div className="rounded-xl bg-gray-50 dark:bg-slate-700 p-4 space-y-1 text-sm">
+          <div className="flex justify-between text-gray-600 dark:text-slate-300">
             <span>Przychód</span>
             <span>{formatCurrency(salePrice)}</span>
           </div>
-          <div className="flex justify-between font-semibold">
+          <div className="flex justify-between font-semibold dark:text-white">
             <span>Twój zysk</span>
             <span className={profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
               {formatCurrency(profit)}
             </span>
           </div>
-          <div className="flex justify-between text-gray-500">
+          <div className="flex justify-between text-gray-500 dark:text-slate-400">
             <span>Marża</span>
             <span>{marginPct.toFixed(1)} %</span>
           </div>

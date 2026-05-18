@@ -77,8 +77,8 @@ function MiniPhoto({ path }: { path: string | null }) {
 
   if (!url) {
     return (
-      <div className="w-10 h-10 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center">
-        <Package size={14} className="text-gray-300" />
+      <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-700 shrink-0 flex items-center justify-center">
+        <Package size={14} className="text-gray-300 dark:text-slate-600" />
       </div>
     )
   }
@@ -125,30 +125,30 @@ function SaleCard({ item }: { item: Item }) {
   const profit   = itemProfit(item)
   const isBundle = item.bundle_size != null
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4">
       <div className="flex items-start gap-3">
         <MiniPhoto path={item.photo_path} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
-            <p className="font-medium text-gray-900 truncate">{item.title}</p>
+            <p className="font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
             {isBundle && (
               <span className="shrink-0 text-xs font-medium bg-violet-100 text-violet-700 rounded-lg px-1.5 py-0.5">
                 Zestaw
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             {[item.category, isBundle ? `${item.bundle_size} szt.` : null].filter(Boolean).join(' · ')}
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-sm font-semibold text-gray-900">{formatCurrency(Number(item.sale_price))}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(Number(item.sale_price))}</p>
           <p className={`text-xs font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
             {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
           </p>
         </div>
       </div>
-      <div className="flex justify-between mt-2 text-xs text-slate-400">
+      <div className="flex justify-between mt-2 text-xs text-slate-400 dark:text-slate-500">
         <span>{item.sale_date ? formatDate(item.sale_date) : '—'}</span>
         <span>Zakup: {formatCurrency(Number(item.purchase_price))}</span>
       </div>
@@ -161,35 +161,35 @@ function SaleTableRow({ item }: { item: Item }) {
   const margin   = Number(item.sale_price) > 0 ? (profit / Number(item.sale_price)) * 100 : 0
   const isBundle = item.bundle_size != null
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50">
+    <tr className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50">
       <td className="py-3 pr-4">
         <div className="flex items-center gap-3">
           <MiniPhoto path={item.photo_path} />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
               {isBundle && (
                 <span className="shrink-0 text-xs font-medium bg-violet-100 text-violet-700 rounded-lg px-1.5 py-0.5">
                   Zestaw {item.bundle_size} szt.
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400">{[item.category, item.brand, item.size].filter(Boolean).join(' · ')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{[item.category, item.brand, item.size].filter(Boolean).join(' · ')}</p>
           </div>
         </div>
       </td>
-      <td className="py-3 pr-4 text-sm text-slate-500 whitespace-nowrap">
+      <td className="py-3 pr-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
         {item.sale_date ? formatDate(item.sale_date) : '—'}
       </td>
       <td className="py-3 pr-4 text-sm text-right whitespace-nowrap">
-        <p className="font-medium">{formatCurrency(Number(item.sale_price))}</p>
-        <p className="text-xs text-slate-400">{formatCurrency(Number(item.purchase_price))}</p>
+        <p className="font-medium dark:text-white">{formatCurrency(Number(item.sale_price))}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{formatCurrency(Number(item.purchase_price))}</p>
       </td>
       <td className="py-3 text-sm text-right whitespace-nowrap">
         <p className={`font-semibold ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
           {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
         </p>
-        <p className="text-xs text-slate-400">{margin.toFixed(1)} %</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">{margin.toFixed(1)} %</p>
       </td>
     </tr>
   )
@@ -241,7 +241,7 @@ export default function Sales() {
 
       {/* header */}
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold text-gray-900">Historia sprzedaży</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Historia sprzedaży</h1>
         <button
           onClick={() => exportCsv(filteredItems, dateFrom, dateTo)}
           disabled={!filteredItems.length}
@@ -257,7 +257,7 @@ export default function Sales() {
         <select
           value={quarter}
           onChange={e => handleQuarterChange(e.target.value)}
-          className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           {QUARTER_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -267,18 +267,18 @@ export default function Sales() {
           type="date"
           value={dateFrom}
           onChange={e => { setDateFrom(e.target.value); setQuarter('') }}
-          className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <input
           type="date"
           value={dateTo}
           onChange={e => { setDateTo(e.target.value); setQuarter('') }}
-          className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <select
           value={category}
           onChange={e => setCategory(e.target.value)}
-          className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           {CATEGORY_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -293,9 +293,9 @@ export default function Sales() {
           { label: 'Zysk w okresie',     value: formatCurrency(profit),  colored: true },
           { label: 'Liczba sprzedanych', value: String(filteredItems.length) + ' szt.' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl shadow-sm p-4">
-            <p className="text-xs text-slate-400">{s.label}</p>
-            <p className={`text-lg font-bold mt-0.5 ${s.colored ? (profit >= 0 ? 'text-emerald-600' : 'text-rose-600') : 'text-gray-900'}`}>
+          <div key={s.label} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4">
+            <p className="text-xs text-slate-400 dark:text-slate-500">{s.label}</p>
+            <p className={`text-lg font-bold mt-0.5 ${s.colored ? (profit >= 0 ? 'text-emerald-600' : 'text-rose-600') : 'text-gray-900 dark:text-white'}`}>
               {s.value}
             </p>
           </div>
@@ -307,8 +307,8 @@ export default function Sales() {
         <div className="text-center py-12 text-slate-400 text-sm">Ładowanie…</div>
       ) : !filteredItems.length ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Package size={48} className="text-gray-200 mb-3" />
-          <p className="text-slate-400">Brak sprzedaży w tym okresie</p>
+          <Package size={48} className="text-gray-200 dark:text-slate-700 mb-3" />
+          <p className="text-slate-400 dark:text-slate-500">Brak sprzedaży w tym okresie</p>
         </div>
       ) : (
         <>
@@ -318,14 +318,14 @@ export default function Sales() {
           </div>
 
           {/* desktop */}
-          <div className="hidden md:block bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
                 <tr>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wide py-3 px-4">Rzecz</th>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase tracking-wide py-3 pr-4">Data</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide py-3 pr-4">Cena</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase tracking-wide py-3">Zysk / marża</th>
+                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide py-3 px-4">Rzecz</th>
+                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide py-3 pr-4">Data</th>
+                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide py-3 pr-4">Cena</th>
+                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide py-3">Zysk / marża</th>
                 </tr>
               </thead>
               <tbody className="px-4">

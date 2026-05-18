@@ -26,16 +26,16 @@ export default function Modal({ open, onClose, title, children, className }: Mod
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
         className={clsx(
-          'relative bg-white w-full sm:max-w-md',
+          'relative bg-white dark:bg-slate-800 w-full sm:max-w-md',
           'rounded-t-2xl sm:rounded-2xl shadow-lg',
           'max-h-[92vh] overflow-y-auto',
           className,
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">{title}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+            <h2 className="font-semibold text-gray-900 dark:text-white">{title}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
               <X size={20} />
             </button>
           </div>

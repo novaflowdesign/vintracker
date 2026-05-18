@@ -16,8 +16,8 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
 
   if (!path || !url) {
     return (
-      <div className={`bg-gray-100 flex items-center justify-center ${className}`}>
-        <Package size={32} className="text-gray-300" />
+      <div className={`bg-gray-100 dark:bg-slate-700 flex items-center justify-center ${className}`}>
+        <Package size={32} className="text-gray-300 dark:text-slate-600" />
       </div>
     )
   }
@@ -62,13 +62,13 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
-      <div className="aspect-square bg-gray-200" />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden animate-pulse">
+      <div className="aspect-square bg-gray-200 dark:bg-slate-700" />
       <div className="p-4 space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-200 rounded w-1/2" />
-        <div className="h-3 bg-gray-200 rounded w-1/3" />
-        <div className="mt-4 h-8 bg-gray-200 rounded-xl" />
+        <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
+        <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/3" />
+        <div className="mt-4 h-8 bg-gray-200 dark:bg-slate-700 rounded-xl" />
       </div>
     </div>
   )
@@ -92,12 +92,12 @@ function BundleChildRow({
     Number(child.purchase_price)
 
   return (
-    <div className="py-3 border-b border-gray-100 last:border-0">
+    <div className="py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
       <div className="flex gap-3">
         <PhotoThumbnail path={child.photo_path} className="w-12 h-12 rounded-xl shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{child.title}</p>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{child.title}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             Zakup: {formatCurrency(Number(child.purchase_price))}
           </p>
           {child.status === 'SOLD' && child.sale_date && (
@@ -153,17 +153,17 @@ function BundleCard({
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col relative">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col relative">
         <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
 
         {/* Children overlay */}
         {showOverlay && (
-          <div className="absolute inset-0 bg-white rounded-2xl z-10 flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100">
-              <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+          <div className="absolute inset-0 bg-white dark:bg-slate-800 rounded-2xl z-10 flex flex-col">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100 dark:border-slate-700">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</p>
               <button
                 onClick={() => setShowOverlay(false)}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 p-1"
                 aria-label="Zamknij"
               >
                 <X size={18} />
@@ -185,35 +185,35 @@ function BundleCard({
         <div className="p-4 flex flex-col flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-semibold text-gray-900 truncate">{item.title}</p>
+              <p className="font-semibold text-gray-900 dark:text-white truncate">{item.title}</p>
               {item.category && (
-                <p className="text-xs text-slate-400">{item.category}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{item.category}</p>
               )}
             </div>
-            <span className="text-xs font-medium bg-violet-100 text-violet-700 rounded-lg px-2 py-0.5 shrink-0">
+            <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
               Zestaw
             </span>
           </div>
 
-          <div className="mt-2 text-sm text-gray-600">
+          <div className="mt-2 text-sm text-gray-600 dark:text-slate-300">
             <span className="font-medium">{formatCurrency(Number(item.purchase_price))}</span>
-            <span className="text-slate-400 text-xs ml-1">
+            <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
               ({formatCurrency(unitPrice)}/szt.)
             </span>
           </div>
 
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
             {formatDate(item.purchase_date)} · {days}{' '}
             {days === 1 ? 'dzień' : 'dni'} w magazynie
           </p>
 
           {/* Progress */}
           <div className="mt-3">
-            <div className="flex justify-between text-xs text-slate-500 mb-1">
+            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
               <span>{soldCount}/{total} sprzedanych</span>
               <span>{Math.round(progress)}%</span>
             </div>
-            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                 style={{ width: `${progress}%` }}
@@ -278,23 +278,23 @@ function RegularCard({
   const days = daysSince(item.purchase_date)
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
       <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
 
       <div className="p-4 flex flex-col flex-1">
-        <p className="font-semibold text-gray-900 truncate">{item.title}</p>
+        <p className="font-semibold text-gray-900 dark:text-white truncate">{item.title}</p>
 
         {(item.brand || item.size) && (
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {[item.brand, item.size].filter(Boolean).join(' · ')}
           </p>
         )}
 
-        <p className="text-sm text-gray-600 mt-2">
+        <p className="text-sm text-gray-600 dark:text-slate-300 mt-2">
           Kupione za{' '}
           <span className="font-medium">{formatCurrency(Number(item.purchase_price))}</span>
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-slate-500">
           {formatDate(item.purchase_date)} · {days}{' '}
           {days === 1 ? 'dzień' : 'dni'} w magazynie
         </p>

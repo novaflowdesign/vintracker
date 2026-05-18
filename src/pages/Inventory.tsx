@@ -50,9 +50,9 @@ export default function Inventory() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-8">
       <div className="mx-auto max-w-5xl px-4 pt-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">Magazyn</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Magazyn</h1>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -63,7 +63,7 @@ export default function Inventory() {
               placeholder="Szukaj po tytule..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 dark:text-white"
             />
           </div>
           <Select
@@ -87,9 +87,9 @@ export default function Inventory() {
           </div>
         ) : !items?.length ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <Package size={56} className="text-gray-200 mb-4" />
-            <p className="text-lg font-semibold text-gray-400">Brak rzeczy w magazynie</p>
-            <p className="text-sm text-gray-400 mb-6">Dodaj pierwszą rzecz, żeby zacząć śledzić swój magazyn.</p>
+            <Package size={56} className="text-gray-200 dark:text-slate-700 mb-4" />
+            <p className="text-lg font-semibold text-gray-400 dark:text-slate-500">Brak rzeczy w magazynie</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 mb-6">Dodaj pierwszą rzecz, żeby zacząć śledzić swój magazyn.</p>
             <Link
               to="/add"
               className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"

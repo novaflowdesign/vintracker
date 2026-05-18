@@ -19,7 +19,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={selectId} className="text-sm font-medium text-gray-700">
+          <label htmlFor={selectId} className="text-sm font-medium text-gray-700 dark:text-slate-300">
             {label}
           </label>
         )}
@@ -27,9 +27,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={clsx(
-            'w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition appearance-none bg-white',
+            'w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition appearance-none bg-white dark:bg-slate-700 dark:text-white',
             'focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-            error ? 'border-rose-400 bg-rose-50' : 'border-gray-300',
+            error ? 'border-rose-400 bg-rose-50' : 'border-gray-300 dark:border-slate-600',
             className,
           )}
           {...props}

@@ -22,12 +22,12 @@ export default function Layout() {
   const { signOut } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gray-50 md:flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 md:flex" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white border-r border-gray-200 px-3 py-6">
+      <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 px-3 py-6">
         <Link to="/" className="flex items-center gap-2.5 px-4 mb-8">
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="w-8 h-8 rounded-lg shrink-0" />
-          <span className="text-base font-semibold text-slate-900">Vintracker</span>
+          <span className="text-base font-semibold text-slate-900 dark:text-white">Vintracker</span>
         </Link>
 
         <nav className="flex flex-col gap-1 flex-1">
@@ -40,8 +40,8 @@ export default function Layout() {
                 clsx(
                   'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
                   isActive
-                    ? 'text-emerald-600 bg-emerald-50'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
+                    ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700',
                 )
               }
             >
@@ -57,7 +57,7 @@ export default function Layout() {
 
         <button
           onClick={signOut}
-          className="px-4 text-sm text-gray-400 hover:text-gray-600 text-left transition-colors"
+          className="px-4 text-sm text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 text-left transition-colors"
         >
           Wyloguj
         </button>
@@ -71,7 +71,7 @@ export default function Layout() {
       <InstallPrompt />
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around items-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}>
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex justify-around items-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}>
         {links.map(({ to, icon: Icon, label, end }) =>
           to === '/add' ? (
             <NavLink
@@ -89,7 +89,7 @@ export default function Layout() {
               className={({ isActive }) =>
                 clsx(
                   'flex flex-col items-center gap-1 text-xs font-medium transition-colors px-2 py-1',
-                  isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-900',
+                  isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white',
                 )
               }
             >

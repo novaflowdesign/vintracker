@@ -103,7 +103,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
 
         {/* Photo */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Zdjęcie</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
           {photoPreview ? (
             <div className="relative w-32 h-32 rounded-xl overflow-hidden">
               <img src={photoPreview} alt="" className="w-full h-full object-cover" />
@@ -116,13 +116,13 @@ export default function EditItemModal({ item, open, onClose }: Props) {
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
+            <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
               {item?.photo_path ? (
-                <span className="text-xs text-gray-400 text-center px-2">Kliknij, aby zmienić zdjęcie</span>
+                <span className="text-xs text-gray-400 dark:text-slate-500 text-center px-2">Kliknij, aby zmienić zdjęcie</span>
               ) : (
                 <>
-                  <ImagePlus size={24} className="text-gray-400" />
-                  <span className="text-xs text-gray-400 mt-1">Dodaj zdjęcie</span>
+                  <ImagePlus size={24} className="text-gray-400 dark:text-slate-500" />
+                  <span className="text-xs text-gray-400 dark:text-slate-500 mt-1">Dodaj zdjęcie</span>
                 </>
               )}
               <input

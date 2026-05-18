@@ -13,7 +13,7 @@ export default function ProgressBar({ percent }: ProgressBarProps) {
   const color   = barColor(clamped)
 
   return (
-    <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+    <div className="h-3 w-full rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700 ease-out"
         style={{ width: `${clamped}%`, backgroundColor: color }}

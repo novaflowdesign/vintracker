@@ -36,8 +36,8 @@ export default function LineChartCard({
   referenceLabel,
 }: LineChartCardProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />

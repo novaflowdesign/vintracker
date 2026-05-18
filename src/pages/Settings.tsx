@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
-import { LogOut, Download, Upload, Trash2 } from 'lucide-react'
+import { LogOut, Download, Upload, Trash2, Sun, Moon } from 'lucide-react'
+import clsx from 'clsx'
+import { useTheme } from '../context/ThemeContext'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -13,14 +15,15 @@ import type { Item } from '../types/item'
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
-      <h2 className="text-base font-semibold text-gray-900 mb-4">{title}</h2>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>
       {children}
     </div>
   )
 }
 
 export default function Settings() {
+  const { theme, toggle } = useTheme()
   const { user, signOut } = useAuth()
   const qc = useQueryClient()
   const { data: allItems = [] } = useItems({})
@@ -126,10 +129,40 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-6 pb-10 space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Ustawienia</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Ustawienia</h1>
+
+      <Card title="Wygląd">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            {theme === 'dark'
+              ? <Moon size={18} className="text-slate-400" />
+              : <Sun size={18} className="text-amber-500" />
+            }
+            <span className="text-sm text-slate-600 dark:text-slate-300">
+              {theme === 'dark' ? 'Ciemny motyw' : 'Jasny motyw'}
+            </span>
+          </div>
+          <button
+            onClick={toggle}
+            role="switch"
+            aria-checked={theme === 'dark'}
+            className={clsx(
+              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+              theme === 'dark' ? 'bg-emerald-600' : 'bg-gray-300',
+            )}
+          >
+            <span
+              className={clsx(
+                'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform',
+                theme === 'dark' ? 'translate-x-6' : 'translate-x-1',
+              )}
+            />
+          </button>
+        </div>
+      </Card>
 
       <Card title="Konto">
-        <p className="text-sm text-slate-500 mb-4">{user?.email}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{user?.email}</p>
         <Button variant="danger" onClick={signOut}>
           <LogOut size={16} />
           Wyloguj
@@ -137,7 +170,7 @@ export default function Settings() {
       </Card>
 
       <Card title="Backup danych">
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Eksportuj wszystkie swoje rzeczy do pliku JSON. Trzymaj go bezpiecznie — to Twój backup.
         </p>
         <Button variant="secondary" onClick={handleExport} disabled={!allItems.length}>
@@ -152,13 +185,13 @@ export default function Settings() {
           Zdjęcia nie są przywracane — tylko metadane.
         </p>
         <div className="space-y-3">
-          <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50 transition-colors cursor-pointer text-sm text-gray-600">
+          <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-emerald-500 hover:bg-emerald-50 transition-colors cursor-pointer text-sm text-gray-600 dark:text-slate-300">
             <Upload size={16} className="shrink-0" />
             {importFile ? importFile.name : 'Wybierz plik .json'}
             <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFileSelect} />
           </label>
           {importPreview && (
-            <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-xl px-4 py-3 text-sm text-gray-700 dark:text-slate-200">
               Plik zawiera <span className="font-semibold">{importPreview.total}</span> rzeczy
               {' '}(<span className="text-emerald-600 font-medium">{importPreview.inStock} w magazynie</span>,{' '}
               <span className="text-slate-500">{importPreview.sold} sprzedanych</span>)
@@ -173,7 +206,7 @@ export default function Settings() {
       </Card>
 
       <Card title="Strefa niebezpieczna">
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Usuwa wszystkie Twoje przedmioty i zdjęcia z serwera. Tej operacji nie można cofnąć.
         </p>
         <Button variant="danger" onClick={handleDeleteAll} loading={deleting}>
@@ -183,8 +216,8 @@ export default function Settings() {
       </Card>
 
       <Card title="O aplikacji">
-        <div className="text-sm text-slate-500 space-y-1.5">
-          <p className="font-medium text-gray-900">Vinted Tracker v0.1.0</p>
+        <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1.5">
+          <p className="font-medium text-gray-900 dark:text-white">Vinted Tracker v0.1.0</p>
           <p>Limit działalności nierejestrowanej: {formatCurrency(QUARTERLY_LIMIT_PLN)} / kwartał (2026)</p>
           <a href="#" className="text-emerald-600 hover:underline block">GitHub →</a>
         </div>
