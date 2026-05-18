@@ -9,7 +9,6 @@ import {
   Settings,
   FileText,
   Plus,
-  X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../hooks/useAuth'
@@ -49,14 +48,14 @@ function AddFab() {
           <>
             <button
               onClick={() => { navigate('/add?bundle=1'); setOpen(false) }}
-              className="flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 transition-all"
+              className="fab-option fab-option-1 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
             >
               <Package size={16} className="text-violet-600 shrink-0" />
               Zestaw
             </button>
             <button
               onClick={() => { navigate('/add'); setOpen(false) }}
-              className="flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 transition-all"
+              className="fab-option fab-option-2 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
             >
               <Plus size={16} className="text-emerald-600 shrink-0" />
               Jedna rzecz
@@ -69,7 +68,10 @@ function AddFab() {
           className="w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-xl flex items-center justify-center transition-all active:scale-95"
           aria-label="Dodaj"
         >
-          {open ? <X size={22} /> : <Plus size={24} />}
+          <Plus
+            size={24}
+            className={clsx('transition-transform duration-200', open && 'rotate-45')}
+          />
         </button>
       </div>
     </>
