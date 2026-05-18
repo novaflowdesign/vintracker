@@ -259,6 +259,7 @@ function BundleCard({
   const soldCount = children.filter(c => c.status === 'SOLD').length
   const progress  = total > 0 ? (soldCount / total) * 100 : 0
   const unitPrice = total > 0 ? Number(item.purchase_price) / total : Number(item.purchase_price)
+  const soldCost  = children.filter(c => c.status === 'SOLD').reduce((s, c) => s + Number(c.purchase_price), 0)
   const days      = daysSince(item.purchase_date)
 
   return (
@@ -373,6 +374,11 @@ function BundleCard({
                   style={{ width: `${progress}%` }}
                 />
               </div>
+              {soldCount > 0 && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                  Zakup: <span className="font-medium text-gray-600 dark:text-slate-300">{formatCurrency(soldCost)}</span>
+                </p>
+              )}
             </div>
           </div>
 
