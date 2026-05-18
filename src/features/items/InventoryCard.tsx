@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import Button from '../../components/Button'
 import SellModal from './SellModal'
 import EditItemModal from './EditItemModal'
+import GroupSellModal from './GroupSellModal'
 import { usePhotoUrl, useBundleChildren } from './queries'
 import { formatCurrency, formatDate, daysSince } from '../../utils/format'
 import type { Item } from '../../types/item'
@@ -145,19 +146,43 @@ function BundleChildRow({
   child,
   onSell,
   onEdit,
+  selectable,
+  selected,
+  onToggleSelect,
 }: {
   child: Item
   onSell: () => void
   onEdit: () => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const profit =
     Number(child.sale_price ?? 0) -
     Number(child.shipping_cost_paid_by_seller) -
     Number(child.purchase_price)
 
+  const canSelect = selectable && child.status === 'IN_STOCK'
+
   return (
-    <div className="py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
-      <div className="flex gap-3">
+    <div
+      className={clsx(
+        'py-3 border-b border-gray-100 dark:border-slate-700 last:border-0',
+        canSelect && 'cursor-pointer',
+      )}
+      onClick={canSelect ? onToggleSelect : undefined}
+    >
+      <div className="flex gap-3 items-center">
+        {canSelect && (
+          <div className={clsx(
+            'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+            selected
+              ? 'bg-emerald-500 border-emerald-500'
+              : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-800',
+          )}>
+            {selected && <Check size={11} className="text-white" strokeWidth={3} />}
+          </div>
+        )}
         <PhotoThumbnail path={child.photo_path} className="w-12 h-12 rounded-xl shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{child.title}</p>
@@ -172,22 +197,29 @@ function BundleChildRow({
               </span>
             </p>
           )}
+          {child.status === 'IN_STOCK' && selectable && (
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {formatCurrency(Number(child.purchase_price))} cena zakupu
+            </p>
+          )}
         </div>
       </div>
-      <div className="flex gap-1.5 mt-2">
-        <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onEdit} aria-label="Edytuj">
-          <Pencil size={14} />
-        </Button>
-        {child.status === 'IN_STOCK' ? (
-          <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onSell}>
-            Sprzedaj
+      {!selectable && (
+        <div className="flex gap-1.5 mt-2">
+          <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onEdit} aria-label="Edytuj">
+            <Pencil size={14} />
           </Button>
-        ) : (
-          <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onSell}>
-            Edytuj sprzedaż
-          </Button>
-        )}
-      </div>
+          {child.status === 'IN_STOCK' ? (
+            <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onSell}>
+              Sprzedaj
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onSell}>
+              Edytuj sprzedaż
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -212,7 +244,23 @@ function BundleCard({
   const [showOverlay, setShowOverlay] = useState(false)
   const [sellChild, setSellChild] = useState<Item | null>(null)
   const [editChild, setEditChild] = useState<Item | null>(null)
+  const [multiSell, setMultiSell] = useState(false)
+  const [selectedChildIds, setSelectedChildIds] = useState<Set<string>>(new Set())
+  const [groupSellItems, setGroupSellItems] = useState<Item[]>([])
   const { data: children = [] } = useBundleChildren(item.id)
+
+  function toggleChildSelect(id: string) {
+    setSelectedChildIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function exitMultiSell() {
+    setMultiSell(false)
+    setSelectedChildIds(new Set())
+  }
 
   const total     = item.bundle_size ?? children.length
   const soldCount = children.filter(c => c.status === 'SOLD').length
@@ -234,14 +282,33 @@ function BundleCard({
         {showOverlay && (
           <div className="absolute inset-0 bg-white dark:bg-slate-800 rounded-2xl z-10 flex flex-col">
             <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-100 dark:border-slate-700">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</p>
-              <button
-                onClick={() => setShowOverlay(false)}
-                className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 p-1"
-                aria-label="Zamknij"
-              >
-                <X size={18} />
-              </button>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1 min-w-0 mr-2">{item.title}</p>
+              <div className="flex items-center gap-1 shrink-0">
+                {children.some(c => c.status === 'IN_STOCK') && (
+                  multiSell ? (
+                    <button
+                      onClick={exitMultiSell}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      Anuluj
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setMultiSell(true)}
+                      className="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      Zaznacz kilka
+                    </button>
+                  )
+                )}
+                <button
+                  onClick={() => { setShowOverlay(false); exitMultiSell() }}
+                  className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 p-1"
+                  aria-label="Zamknij"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="overflow-y-auto flex-1 px-4">
               {children.map(child => (
@@ -250,9 +317,25 @@ function BundleCard({
                   child={child}
                   onSell={() => { setSellChild(child); setShowOverlay(false) }}
                   onEdit={() => { setEditChild(child); setShowOverlay(false) }}
+                  selectable={multiSell}
+                  selected={selectedChildIds.has(child.id)}
+                  onToggleSelect={() => toggleChildSelect(child.id)}
                 />
               ))}
             </div>
+            {multiSell && selectedChildIds.size > 0 && (
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700">
+                <button
+                  onClick={() => {
+                    const items = children.filter(c => selectedChildIds.has(c.id) && c.status === 'IN_STOCK')
+                    setGroupSellItems(items)
+                  }}
+                  className="w-full flex items-center justify-center rounded-xl font-medium transition-colors py-3 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  Sprzedaj {selectedChildIds.size} szt. razem
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -321,6 +404,12 @@ function BundleCard({
         item={editChild}
         open={!!editChild}
         onClose={() => setEditChild(null)}
+      />
+      <GroupSellModal
+        items={groupSellItems}
+        open={groupSellItems.length > 0}
+        onClose={() => setGroupSellItems([])}
+        onSuccess={() => { setGroupSellItems([]); exitMultiSell(); setShowOverlay(false) }}
       />
     </>
   )
