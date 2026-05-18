@@ -129,7 +129,6 @@ export default function EditItemModal({ item, open, onClose }: Props) {
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={handlePhotoChange}
               />

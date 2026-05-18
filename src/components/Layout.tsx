@@ -64,14 +64,14 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-56 pb-20 md:pb-0">
+      <main className="flex-1 md:ml-56 md:pb-0" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         <Outlet />
       </main>
 
       <InstallPrompt />
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around items-center h-16 z-50">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around items-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}>
         {links.map(({ to, icon: Icon, label, end }) =>
           to === '/add' ? (
             <NavLink
