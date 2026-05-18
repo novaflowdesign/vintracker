@@ -18,7 +18,7 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
   if (!path || !url) {
     return (
       <div className={`bg-gray-100 dark:bg-slate-700 flex items-center justify-center ${className}`}>
-        <Package size={24} className="text-gray-300 dark:text-slate-600" />
+        <Package size={28} className="text-gray-300 dark:text-slate-600" />
       </div>
     )
   }
@@ -31,7 +31,7 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
       >
         <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-          <Search size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+          <Search size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
         </div>
       </div>
       {lightbox && createPortal(
@@ -63,15 +63,16 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden animate-pulse">
-      <div className="w-2/5 min-h-[150px] bg-gray-200 dark:bg-slate-700 shrink-0" />
-      <div className="flex-1 p-4 flex flex-col gap-2">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden animate-pulse">
+      <div className="w-full h-40 bg-gray-200 dark:bg-slate-700" />
+      <div className="p-4 space-y-2">
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
         <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3 mt-2" />
         <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-2/3" />
-        <div className="flex-1" />
-        <div className="h-8 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+      </div>
+      <div className="px-4 pb-4">
+        <div className="h-12 bg-gray-200 dark:bg-slate-700 rounded-xl" />
       </div>
     </div>
   )
@@ -83,13 +84,13 @@ function SelectOverlay({ selected }: { selected: boolean }) {
   return (
     <div
       className={clsx(
-        'absolute top-2 left-2 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
+        'absolute top-2.5 left-2.5 z-20 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all',
         selected
           ? 'bg-emerald-500 border-emerald-500'
           : 'bg-white/80 dark:bg-slate-800/80 border-gray-300 dark:border-slate-500',
       )}
     >
-      {selected && <Check size={13} className="text-white" strokeWidth={3} />}
+      {selected && <Check size={14} className="text-white" strokeWidth={3} />}
     </div>
   )
 }
@@ -129,7 +130,6 @@ function BundleChildRow({
           )}
         </div>
       </div>
-
       <div className="flex gap-1.5 mt-2">
         <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onEdit} aria-label="Edytuj">
           <Pencil size={14} />
@@ -180,7 +180,7 @@ function BundleCard({
     <>
       <div
         className={clsx(
-          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden relative transition-all',
+          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all',
           selectable && 'cursor-pointer',
           selectable && selected && 'ring-2 ring-emerald-500',
         )}
@@ -212,76 +212,81 @@ function BundleCard({
           </div>
         )}
 
-        {/* Photo — left 40% */}
-        <div className="relative w-2/5 shrink-0">
-          <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[160px]" />
+        {/* Photo — full width */}
+        <div className="relative">
+          <PhotoThumbnail path={item.photo_path} className="w-full h-40" />
           {selectable && <SelectOverlay selected={!!selected} />}
         </div>
 
-        {/* Info + buttons — right side */}
-        <div className="flex-1 flex flex-col p-4 min-w-0">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2">
-              <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
-              <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
-                Zestaw
-              </span>
-            </div>
-
-            {item.category && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
-            )}
-
-            <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
-              {formatCurrency(Number(item.purchase_price))}
-              <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
-                ({formatCurrency(unitPrice)}/szt.)
-              </span>
-            </p>
-
-            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
-            </p>
-
-            <div className="mt-2">
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-                <span>{soldCount}/{total} sprzed.</span>
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
+        {/* Info */}
+        <div className="px-4 pt-3 pb-0 flex-1">
+          <div className="flex items-start gap-2">
+            <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
+            <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
+              Zestaw
+            </span>
           </div>
 
-          {!selectable && (
-            <div className="flex gap-2 mt-3">
-              <Button
-                variant="primary"
-                size="sm"
-                className="flex-1 justify-center"
-                onClick={e => { e.stopPropagation(); setShowOverlay(true) }}
-              >
-                Sprzedaj
-              </Button>
-              <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); onEdit() }} aria-label="Edytuj">
-                <Pencil size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={e => { e.stopPropagation(); onDelete() }}
-                aria-label="Usuń"
-                className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
+          {item.category && (
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
           )}
+
+          <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
+            {formatCurrency(Number(item.purchase_price))}
+            <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
+              ({formatCurrency(unitPrice)}/szt.)
+            </span>
+          </p>
+
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+            {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w magazynie
+          </p>
+
+          <div className="mt-3">
+            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <span>{soldCount}/{total} sprzedanych</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
         </div>
+
+        {/* Buttons */}
+        {!selectable && (
+          <div className="flex gap-2 p-4">
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1"
+              onClick={e => { e.stopPropagation(); setShowOverlay(true) }}
+            >
+              Sprzedaj
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="px-3.5"
+              onClick={e => { e.stopPropagation(); onEdit() }}
+              aria-label="Edytuj"
+            >
+              <Pencil size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="px-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+              onClick={e => { e.stopPropagation(); onDelete() }}
+              aria-label="Usuń"
+            >
+              <Trash2 size={18} />
+            </Button>
+          </div>
+        )}
       </div>
 
       <SellModal
@@ -322,58 +327,63 @@ function RegularCard({
   return (
     <div
       className={clsx(
-        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden transition-all',
+        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all',
         selectable && 'cursor-pointer',
         selectable && selected && 'ring-2 ring-emerald-500',
       )}
       onClick={selectable ? onToggleSelect : undefined}
     >
-      {/* Photo — left 40% */}
-      <div className="relative w-2/5 shrink-0">
-        <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[150px]" />
+      {/* Photo — full width */}
+      <div className="relative">
+        <PhotoThumbnail path={item.photo_path} className="w-full h-40" />
         {selectable && <SelectOverlay selected={!!selected} />}
       </div>
 
-      {/* Info + buttons — right side */}
-      <div className="flex-1 flex flex-col p-4 min-w-0">
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
+      {/* Info */}
+      <div className="px-4 pt-3 pb-0 flex-1">
+        <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
 
-          {(item.brand || item.size) && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              {[item.brand, item.size].filter(Boolean).join(' · ')}
-            </p>
-          )}
-
-          <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
-            {formatCurrency(Number(item.purchase_price))}
+        {(item.brand || item.size) && (
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {[item.brand, item.size].filter(Boolean).join(' · ')}
           </p>
-
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
-          </p>
-        </div>
-
-        {!selectable && (
-          <div className="flex gap-2 mt-3">
-            <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onSell}>
-              Sprzedane
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edytuj">
-              <Pencil size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              aria-label="Usuń"
-              className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-            >
-              <Trash2 size={16} />
-            </Button>
-          </div>
         )}
+
+        <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
+          {formatCurrency(Number(item.purchase_price))}
+        </p>
+
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+          {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w magazynie
+        </p>
       </div>
+
+      {/* Buttons */}
+      {!selectable && (
+        <div className="flex gap-2 p-4">
+          <Button variant="primary" size="lg" className="flex-1" onClick={onSell}>
+            Sprzedane
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="px-3.5"
+            onClick={onEdit}
+            aria-label="Edytuj"
+          >
+            <Pencil size={18} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="px-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+            onClick={onDelete}
+            aria-label="Usuń"
+          >
+            <Trash2 size={18} />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
