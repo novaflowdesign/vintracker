@@ -473,7 +473,7 @@ function RegularCard({
 
         {!selectable && (
           <ActionButtons
-            primaryLabel="Sprzedane"
+            primaryLabel="Sprzedaj"
             onPrimary={onSell}
             onEdit={onEdit}
             onDelete={onDelete}
