@@ -215,8 +215,8 @@ function BundleCard({
 
         {/* Photo + info row */}
         <div className="flex gap-3">
-          <div className="relative shrink-0">
-            <PhotoThumbnail path={item.photo_path} className="w-24 h-24 rounded-xl overflow-hidden" />
+          <div className="relative shrink-0 w-24">
+            <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-20 rounded-xl overflow-hidden" />
             {selectable && <SelectOverlay selected={!!selected} />}
           </div>
 
