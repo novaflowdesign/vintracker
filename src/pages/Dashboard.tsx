@@ -149,6 +149,7 @@ export default function Dashboard() {
   const topSales    = topProfitableSales(salesItems)
 
   return (
+    <>
     <div className="mx-auto max-w-5xl px-4 pt-6 pb-10 space-y-6">
 
       {/* 1 — quarterly limit bar */}
@@ -255,5 +256,6 @@ export default function Dashboard() {
       </>,
       document.body,
     )}
+    </>
   )
 }
