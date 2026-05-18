@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Settings sheet slide-up */
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0);    }
+}
+
+.settings-sheet {
+  animation: sheet-slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 /* FAB option animations */
 @keyframes fab-option-in {
   from { opacity: 0; transform: translateY(12px) scale(0.92); }

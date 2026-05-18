@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays,
@@ -7,7 +8,10 @@ import {
   Package,
   Warehouse,
   Clock,
+  Settings,
+  X,
 } from 'lucide-react'
+import SettingsPage from './Settings'
 import { useItems, useAllSoldBundleChildren, usePhotoUrl } from '../features/items/queries'
 import StatCard from '../components/charts/StatCard'
 import ProgressBar from '../components/charts/ProgressBar'
@@ -88,6 +92,7 @@ function DashboardSkeleton() {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const { data: items = [], isLoading: loadingItems } = useItems({})
   const { data: allSoldChildren = [], isLoading: loadingChildren } = useAllSoldBundleChildren()
   const isLoading = loadingItems || loadingChildren
@@ -212,6 +217,43 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Settings button */}
+      <div className="flex justify-center pt-2 pb-4">
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors px-4 py-2 rounded-xl hover:bg-white dark:hover:bg-slate-800"
+        >
+          <Settings size={15} />
+          Ustawienia
+        </button>
+      </div>
+
     </div>
+
+    {/* Settings sheet */}
+    {settingsOpen && createPortal(
+      <>
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => setSettingsOpen(false)}
+        />
+        <div className="fixed inset-x-0 bottom-0 z-50 bg-gray-50 dark:bg-slate-950 rounded-t-3xl max-h-[88vh] flex flex-col settings-sheet">
+          <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+          </div>
+          <button
+            onClick={() => setSettingsOpen(false)}
+            className="absolute top-3 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Zamknij"
+          >
+            <X size={20} />
+          </button>
+          <div className="overflow-y-auto flex-1" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            <SettingsPage />
+          </div>
+        </div>
+      </>,
+      document.body,
+    )}
   )
 }

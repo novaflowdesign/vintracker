@@ -22,15 +22,17 @@ const sidebarLinks = [
   { to: '/settings',  icon: Settings,        label: 'Ustawienia',end: false },
 ]
 
-const mobileNavLinks = [
+const leftMobileLinks = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard', end: true  },
   { to: '/inventory', icon: Package,         label: 'Magazyn',   end: false },
-  { to: '/opisy',     icon: FileText,        label: 'Opisy',     end: false },
-  { to: '/sales',     icon: TrendingUp,      label: 'Sprzedaż',  end: false },
-  { to: '/settings',  icon: Settings,        label: 'Ustawienia',end: false },
 ]
 
-function AddFab() {
+const rightMobileLinks = [
+  { to: '/opisy',     icon: FileText,        label: 'Opisy',     end: false },
+  { to: '/sales',     icon: TrendingUp,      label: 'Sprzedaż',  end: false },
+]
+
+function AddButton() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
@@ -40,41 +42,62 @@ function AddFab() {
         <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
       )}
 
-      <div
-        className="md:hidden fixed z-50 flex flex-col items-end gap-2"
-        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.875rem)', right: '1rem' }}
-      >
-        {open && (
-          <>
-            <button
-              onClick={() => { navigate('/add?bundle=1'); setOpen(false) }}
-              className="fab-option fab-option-1 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
-            >
-              <Package size={16} className="text-violet-600 shrink-0" />
-              Zestaw
-            </button>
-            <button
-              onClick={() => { navigate('/add'); setOpen(false) }}
-              className="fab-option fab-option-2 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
-            >
-              <Plus size={16} className="text-emerald-600 shrink-0" />
-              Jedna rzecz
-            </button>
-          </>
-        )}
-
-        <button
-          onClick={() => setOpen(v => !v)}
-          className="w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-xl flex items-center justify-center transition-all active:scale-95"
-          aria-label="Dodaj"
+      {/* Menu — fixed, centered above nav */}
+      {open && (
+        <div
+          className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.875rem)' }}
         >
-          <Plus
-            size={24}
-            className={clsx('transition-transform duration-200', open && 'rotate-45')}
-          />
-        </button>
-      </div>
+          <button
+            onClick={() => { navigate('/add?bundle=1'); setOpen(false) }}
+            className="fab-option fab-option-1 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
+          >
+            <Package size={16} className="text-violet-600 shrink-0" />
+            Zestaw
+          </button>
+          <button
+            onClick={() => { navigate('/add'); setOpen(false) }}
+            className="fab-option fab-option-2 flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700"
+          >
+            <Plus size={16} className="text-emerald-600 shrink-0" />
+            Jedna rzecz
+          </button>
+        </div>
+      )}
+
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-12 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-md flex items-center justify-center transition-all active:scale-95"
+        aria-label="Dodaj"
+      >
+        <Plus
+          size={22}
+          className={clsx('transition-transform duration-200', open && 'rotate-45')}
+        />
+      </button>
     </>
+  )
+}
+
+function MobileNavLink({ to, icon: Icon, label, end }: { to: string; icon: React.ElementType; label: string; end: boolean }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        clsx(
+          'flex flex-col items-center gap-1 text-xs font-medium transition-colors px-2 py-1',
+          isActive ? 'text-emerald-600' : 'text-gray-500 dark:text-slate-400',
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+          <span>{label}</span>
+        </>
+      )}
+    </NavLink>
   )
 }
 
@@ -88,6 +111,7 @@ export default function Layout() {
       style={{ height: 'env(safe-area-inset-top)' }}
     />
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 md:flex" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 px-3 py-6">
         <Link to="/" className="flex items-center gap-2.5 px-4 mb-8">
@@ -134,33 +158,21 @@ export default function Layout() {
       </main>
 
       <InstallPrompt />
-      <AddFab />
 
       {/* Mobile bottom nav */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex justify-around items-center z-50"
+        className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex items-center z-50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}
       >
-        {mobileNavLinks.map(({ to, icon: Icon, label, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              clsx(
-                'flex flex-col items-center gap-1 text-xs font-medium transition-colors px-2 py-1',
-                isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white',
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                <span>{label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        <div className="flex-1 flex justify-around items-center">
+          {leftMobileLinks.map(l => <MobileNavLink key={l.to} {...l} />)}
+        </div>
+        <div className="flex items-center justify-center px-2">
+          <AddButton />
+        </div>
+        <div className="flex-1 flex justify-around items-center">
+          {rightMobileLinks.map(l => <MobileNavLink key={l.to} {...l} />)}
+        </div>
       </nav>
     </div>
     </>
