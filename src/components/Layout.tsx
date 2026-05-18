@@ -1,4 +1,5 @@
-import { NavLink, Link, Outlet } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom'
 import InstallPrompt from './InstallPrompt'
 import {
   LayoutDashboard,
@@ -6,24 +7,80 @@ import {
   PlusCircle,
   TrendingUp,
   Settings,
+  FileText,
+  Plus,
+  X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../hooks/useAuth'
 
-const links = [
+const sidebarLinks = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard', end: true  },
   { to: '/inventory', icon: Package,         label: 'Magazyn',   end: false },
   { to: '/add',       icon: PlusCircle,      label: 'Dodaj',     end: false },
+  { to: '/opisy',     icon: FileText,        label: 'Opisy',     end: false },
   { to: '/sales',     icon: TrendingUp,      label: 'Sprzedaż',  end: false },
   { to: '/settings',  icon: Settings,        label: 'Ustawienia',end: false },
 ]
+
+const mobileNavLinks = [
+  { to: '/',          icon: LayoutDashboard, label: 'Dashboard', end: true  },
+  { to: '/inventory', icon: Package,         label: 'Magazyn',   end: false },
+  { to: '/opisy',     icon: FileText,        label: 'Opisy',     end: false },
+  { to: '/sales',     icon: TrendingUp,      label: 'Sprzedaż',  end: false },
+  { to: '/settings',  icon: Settings,        label: 'Ustawienia',end: false },
+]
+
+function AddFab() {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+      )}
+
+      <div
+        className="md:hidden fixed z-50 flex flex-col items-end gap-2"
+        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.875rem)', right: '1rem' }}
+      >
+        {open && (
+          <>
+            <button
+              onClick={() => { navigate('/add?bundle=1'); setOpen(false) }}
+              className="flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 transition-all"
+            >
+              <Package size={16} className="text-violet-600 shrink-0" />
+              Zestaw
+            </button>
+            <button
+              onClick={() => { navigate('/add'); setOpen(false) }}
+              className="flex items-center gap-2.5 bg-white dark:bg-slate-800 shadow-lg rounded-full pl-4 pr-5 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 transition-all"
+            >
+              <Plus size={16} className="text-emerald-600 shrink-0" />
+              Jedna rzecz
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="w-14 h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-xl flex items-center justify-center transition-all active:scale-95"
+          aria-label="Dodaj"
+        >
+          {open ? <X size={22} /> : <Plus size={24} />}
+        </button>
+      </div>
+    </>
+  )
+}
 
 export default function Layout() {
   const { signOut } = useAuth()
 
   return (
     <>
-    {/* Fixed cover that hides scrolling content behind the iOS status bar */}
     <div
       className="fixed top-0 inset-x-0 z-50 bg-gray-50 dark:bg-slate-950 pointer-events-none"
       style={{ height: 'env(safe-area-inset-top)' }}
@@ -37,7 +94,7 @@ export default function Layout() {
         </Link>
 
         <nav className="flex flex-col gap-1 flex-1">
-          {links.map(({ to, icon: Icon, label, end }) => (
+          {sidebarLinks.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -75,39 +132,33 @@ export default function Layout() {
       </main>
 
       <InstallPrompt />
+      <AddFab />
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex justify-around items-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}>
-        {links.map(({ to, icon: Icon, label, end }) =>
-          to === '/add' ? (
-            <NavLink
-              key={to}
-              to={to}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-600 hover:bg-emerald-700 transition-colors"
-            >
-              <PlusCircle size={24} className="text-white" strokeWidth={2} />
-            </NavLink>
-          ) : (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                clsx(
-                  'flex flex-col items-center gap-1 text-xs font-medium transition-colors px-2 py-1',
-                  isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{label}</span>
-                </>
-              )}
-            </NavLink>
-          ),
-        )}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex justify-around items-center z-50"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      >
+        {mobileNavLinks.map(({ to, icon: Icon, label, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              clsx(
+                'flex flex-col items-center gap-1 text-xs font-medium transition-colors px-2 py-1',
+                isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white',
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
       </nav>
     </div>
     </>

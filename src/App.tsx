@@ -9,6 +9,7 @@ import Inventory from './pages/Inventory'
 import AddItem from './pages/AddItem'
 import Sales from './pages/Sales'
 import Settings from './pages/Settings'
+import Opisy from './pages/Opisy'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="inventory" element={<Inventory />} />
             <Route path="add" element={<AddItem />} />
             <Route path="sales" element={<Sales />} />
+            <Route path="opisy" element={<Opisy />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

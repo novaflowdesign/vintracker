@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ImagePlus, X, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from '../components/Button'
@@ -14,6 +14,7 @@ import { formatCurrency } from '../utils/format'
 
 export default function AddItem() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const createItem = useCreateItem()
   const createBundle = useCreateBundle()
   const updateItem = useUpdateItem()
@@ -21,7 +22,7 @@ export default function AddItem() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [isBundle, setIsBundle] = useState(false)
+  const [isBundle, setIsBundle] = useState(() => searchParams.get('bundle') === '1')
   const [bundleSizeInput, setBundleSizeInput] = useState('2')
   const bundleSize = Math.max(2, parseInt(bundleSizeInput) || 2)
   const fileRef = useRef<HTMLInputElement>(null)
