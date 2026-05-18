@@ -194,7 +194,10 @@ function BundleSaleCard({ entry }: { entry: BundleEntry }) {
           </div>
         </div>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(entry.lastSaleDate)}</span>
+          <div className="text-xs text-slate-400 dark:text-slate-500 flex gap-2">
+            <span>{formatDate(entry.lastSaleDate)}</span>
+            <span>Zakup: {formatCurrency(entry.cost)}</span>
+          </div>
           <button
             onClick={() => setExpanded(v => !v)}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
