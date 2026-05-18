@@ -81,7 +81,7 @@ Odpowiedz wyłącznie poprawnym JSON bez żadnego dodatkowego tekstu:
 {"title":"...","description":"..."}`
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,7 +90,7 @@ Odpowiedz wyłącznie poprawnym JSON bez żadnego dodatkowego tekstu:
           { inlineData: { mimeType, data: base64 } },
           { text: prompt },
         ]}],
-        generationConfig: { temperature: 0.1, responseMimeType: 'application/json' },
+        generationConfig: { temperature: 0.1 },
       }),
     },
   )
