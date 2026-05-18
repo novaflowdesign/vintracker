@@ -259,7 +259,10 @@ function BundleCard({
   const soldCount = children.filter(c => c.status === 'SOLD').length
   const progress  = total > 0 ? (soldCount / total) * 100 : 0
   const unitPrice = total > 0 ? Number(item.purchase_price) / total : Number(item.purchase_price)
-  const soldCost  = children.filter(c => c.status === 'SOLD').reduce((s, c) => s + Number(c.purchase_price), 0)
+  const soldChildren = children.filter(c => c.status === 'SOLD')
+  const soldRevenue  = soldChildren.reduce((s, c) => s + Number(c.sale_price ?? 0), 0)
+  const soldCost     = soldChildren.reduce((s, c) => s + Number(c.purchase_price), 0)
+  const soldProfit   = soldChildren.reduce((s, c) => s + Number(c.sale_price ?? 0) - Number(c.purchase_price) - Number(c.shipping_cost_paid_by_seller ?? 0), 0)
   const days      = daysSince(item.purchase_date)
 
   return (
@@ -352,12 +355,26 @@ function BundleCard({
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
             )}
 
-            <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
-              {formatCurrency(Number(item.purchase_price))}
-              <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
-                ({formatCurrency(unitPrice)}/szt.)
-              </span>
-            </p>
+            {soldCount > 0 ? (
+              <div className="mt-2">
+                <p className="text-base font-semibold text-gray-800 dark:text-slate-100">
+                  {formatCurrency(soldRevenue)}
+                </p>
+                <p className={`text-sm font-medium mt-0.5 ${soldProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {soldProfit >= 0 ? '+' : ''}{formatCurrency(soldProfit)}
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  Zakup: {formatCurrency(soldCost)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
+                {formatCurrency(Number(item.purchase_price))}
+                <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
+                  ({formatCurrency(unitPrice)}/szt.)
+                </span>
+              </p>
+            )}
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
               {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
@@ -374,11 +391,6 @@ function BundleCard({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              {soldCount > 0 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-                  Zakup: <span className="font-medium text-gray-600 dark:text-slate-300">{formatCurrency(soldCost)}</span>
-                </p>
-              )}
             </div>
           </div>
 
