@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Sonner toast progress bar */
+[data-sonner-toast] {
+  position: relative !important;
+}
+
+[data-sonner-toast]::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 9999px;
+  transform-origin: left center;
+  animation: sonner-progress 3s linear forwards;
+}
+
+@keyframes sonner-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
