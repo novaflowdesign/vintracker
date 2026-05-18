@@ -482,7 +482,7 @@ export default function Sales() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Sprzedaż w okresie',  value: formatCurrency(totalRevenue) },
-          { label: 'Zysk w okresie',      value: formatCurrency(totalProfit), colored: true },
+          { label: 'Zysk w danym okresie', value: formatCurrency(totalProfit), colored: true },
           { label: 'Liczba sprzedanych',  value: `${totalCount} szt.` },
         ].map(s => (
           <div key={s.label} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4">
