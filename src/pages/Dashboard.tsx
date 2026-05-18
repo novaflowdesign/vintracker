@@ -11,7 +11,7 @@ import { useItems } from '../features/items/queries'
 import { usePhotoUrl } from '../features/items/queries'
 import StatCard from '../components/charts/StatCard'
 import ProgressBar from '../components/charts/ProgressBar'
-import LineChartCard from '../components/charts/LineChartCard'
+import QuarterBarChartCard from '../components/charts/QuarterBarChartCard'
 import BarChartCard from '../components/charts/BarChartCard'
 import DonutChartCard from '../components/charts/DonutChartCard'
 import {
@@ -140,10 +140,6 @@ export default function Dashboard() {
       {/* 1 — quarterly limit bar */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Limit działalności nierejestrowanej</p>
-        <div className="flex items-baseline gap-2 mt-1">
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{getQuarterLabel(year, quarter)}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">do {formatDate(qEnd)}</p>
-        </div>
         <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
           {formatCurrency(qRevenue)}{' '}
           <span className="text-lg font-normal text-slate-400 dark:text-slate-500">
@@ -162,6 +158,10 @@ export default function Dashboard() {
             Uważaj! Zbliżasz się do limitu.
           </div>
         )}
+        <div className="flex items-baseline gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">{getQuarterLabel(year, quarter)}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">do {formatDate(qEnd)}</p>
+        </div>
       </div>
 
       {/* 2 — KPI grid */}
@@ -171,15 +171,25 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* 3 — line chart */}
-      <LineChartCard
+      {/* 3 — top sales */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Top 5 sprzedaży</h3>
+        {topSales.length ? (
+          <div className="divide-y divide-gray-100 dark:divide-slate-700">
+            {topSales.map(item => <SaleRow key={item.id} item={item} />)}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">Brak sprzedaży</p>
+        )}
+      </div>
+
+      {/* 4 — quarter bar chart */}
+      <QuarterBarChartCard
         title="Sprzedaż w bieżącym kwartale"
         data={quartSeries}
-        referenceY={QUARTERLY_LIMIT_PLN}
-        referenceLabel="Limit"
       />
 
-      {/* 4 — bar + donut */}
+      {/* 5 — bar + donut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <BarChartCard
           title="Zysk per kategoria (ostatnie 90 dni)"
@@ -191,18 +201,6 @@ export default function Dashboard() {
           data={invByCat}
           emptyText="Magazyn jest pusty"
         />
-      </div>
-
-      {/* 5 — top sales */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Top 5 sprzedaży</h3>
-        {topSales.length ? (
-          <div className="divide-y divide-gray-100 dark:divide-slate-700">
-            {topSales.map(item => <SaleRow key={item.id} item={item} />)}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">Brak sprzedaży</p>
-        )}
       </div>
 
     </div>
