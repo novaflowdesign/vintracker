@@ -7,9 +7,24 @@ import Modal from '../../components/Modal'
 import Button from '../../components/Button'
 import ItemFormFields from './ItemFormFields'
 import { itemSchema, type ItemFormData } from './itemSchema'
-import { useUpdateItem } from './queries'
+import { useUpdateItem, useBundleChildren, usePhotoUrl } from './queries'
 import { uploadPhoto } from './api'
 import type { Item } from '../../types/item'
+
+// ── small component to display an existing child photo ────────────────────────
+
+function ChildPhotoThumb({ path }: { path: string }) {
+  const { data: url } = usePhotoUrl(path)
+  return url ? <img src={url} alt="" className="w-full h-full object-cover" /> : null
+}
+
+// ── types ─────────────────────────────────────────────────────────────────────
+
+type ChildEdit = {
+  title: string
+  photoFile: File | null
+  photoPreview: string | null
+}
 
 interface Props {
   item: Item | null
@@ -20,16 +35,25 @@ interface Props {
 export default function EditItemModal({ item, open, onClose }: Props) {
   const updateItem = useUpdateItem()
 
+  // parent photo
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // bundle children editing
+  const isBundle = item?.bundle_size != null && item?.bundle_id == null
+  const { data: children = [] } = useBundleChildren(isBundle ? (item?.id ?? '') : '')
+  const [childEdits, setChildEdits] = useState<Record<string, ChildEdit>>({})
+  const childFileRef = useRef<HTMLInputElement>(null)
+  const [targetChildId, setTargetChildId] = useState<string | null>(null)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({
     resolver: zodResolver(itemSchema) as any,
   })
 
+  // reset parent form when modal opens
   useEffect(() => {
     if (open && item) {
       form.reset({
@@ -47,7 +71,28 @@ export default function EditItemModal({ item, open, onClose }: Props) {
       setPhotoFile(null)
       setPhotoPreview(null)
     }
+    if (!open) {
+      // revoke any child previews
+      setChildEdits(prev => {
+        Object.values(prev).forEach(e => { if (e.photoPreview) URL.revokeObjectURL(e.photoPreview) })
+        return {}
+      })
+    }
   }, [open, item, form])
+
+  // initialise child edits when children load
+  useEffect(() => {
+    if (!open || !isBundle || children.length === 0) return
+    setChildEdits(prev => {
+      const next = { ...prev }
+      for (const c of children) {
+        if (!next[c.id]) next[c.id] = { title: c.title, photoFile: null, photoPreview: null }
+      }
+      return next
+    })
+  }, [open, isBundle, children])
+
+  // ── parent photo handlers ─────────────────────────────────────────────────
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -64,10 +109,26 @@ export default function EditItemModal({ item, open, onClose }: Props) {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  // ── child photo handler ───────────────────────────────────────────────────
+
+  function handleChildPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !targetChildId) return
+    const preview = URL.createObjectURL(file)
+    setChildEdits(prev => ({
+      ...prev,
+      [targetChildId]: { ...prev[targetChildId], photoFile: file, photoPreview: preview },
+    }))
+    if (childFileRef.current) childFileRef.current.value = ''
+  }
+
+  // ── submit ────────────────────────────────────────────────────────────────
+
   async function onSubmit(data: ItemFormData) {
     if (!item) return
     setUploading(true)
     try {
+      // save parent
       let photoPatch: { photo_path?: string } = {}
       if (photoFile) {
         const path = await uploadPhoto(item.id, photoFile)
@@ -78,16 +139,40 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         patch: {
           ...data,
           ...photoPatch,
-          purchase_price: Number(data.purchase_price),
-          description:    data.description || null,
-          category:       data.category    || null,
-          brand:          data.brand       || null,
-          size:           data.size        || null,
-          condition:      (data.condition  || null) as Item['condition'],
-          purchase_source:(data.purchase_source || null) as Item['purchase_source'],
-          notes:          data.notes       || null,
+          purchase_price:  Number(data.purchase_price),
+          description:     data.description     || null,
+          category:        data.category        || null,
+          brand:           data.brand           || null,
+          size:            data.size            || null,
+          condition:       (data.condition      || null) as Item['condition'],
+          purchase_source: (data.purchase_source|| null) as Item['purchase_source'],
+          notes:           data.notes           || null,
         },
       })
+
+      // save changed children
+      if (isBundle && children.length > 0) {
+        await Promise.all(
+          children.map(async child => {
+            const edit = childEdits[child.id]
+            if (!edit) return
+            const titleChanged = edit.title !== child.title
+            const photoChanged = edit.photoFile !== null
+            if (!titleChanged && !photoChanged) return
+
+            let childPhotoPatch: { photo_path?: string } = {}
+            if (edit.photoFile) {
+              const path = await uploadPhoto(child.id, edit.photoFile)
+              childPhotoPatch = { photo_path: path }
+            }
+            await updateItem.mutateAsync({
+              id: child.id,
+              patch: { title: edit.title, ...childPhotoPatch },
+            })
+          })
+        )
+      }
+
       toast.success('Zmiany zapisane')
       onClose()
     } catch (err) {
@@ -101,7 +186,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
     <Modal open={open} onClose={onClose} title="Edytuj rzecz" className="sm:max-w-lg">
       <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-4">
 
-        {/* Photo */}
+        {/* Parent photo */}
         <div>
           <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
           {photoPreview ? (
@@ -137,6 +222,59 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         </div>
 
         <ItemFormFields form={form} />
+
+        {/* Bundle children section */}
+        {isBundle && children.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-700 pt-4 space-y-3">
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300">
+              Przedmioty w zestawie ({children.length} szt.)
+            </p>
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {children.map((child, i) => {
+                const edit = childEdits[child.id]
+                if (!edit) return null
+                return (
+                  <div key={child.id} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 w-4 shrink-0 text-right">{i + 1}.</span>
+                    {/* Child photo */}
+                    <button
+                      type="button"
+                      onClick={() => { setTargetChildId(child.id); childFileRef.current?.click() }}
+                      className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-emerald-500 transition-colors flex items-center justify-center bg-gray-50 dark:bg-slate-700"
+                    >
+                      {edit.photoPreview ? (
+                        <img src={edit.photoPreview} alt="" className="w-full h-full object-cover" />
+                      ) : child.photo_path ? (
+                        <ChildPhotoThumb path={child.photo_path} />
+                      ) : (
+                        <ImagePlus size={14} className="text-gray-400 dark:text-slate-500" />
+                      )}
+                    </button>
+                    {/* Child title */}
+                    <input
+                      type="text"
+                      value={edit.title}
+                      onChange={e => setChildEdits(prev => ({
+                        ...prev,
+                        [child.id]: { ...prev[child.id], title: e.target.value },
+                      }))}
+                      placeholder={`Przedmiot ${i + 1}`}
+                      className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            {/* shared hidden file input for child photos */}
+            <input
+              ref={childFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleChildPhotoChange}
+            />
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>

@@ -145,14 +145,12 @@ function ActionButtons({
 function BundleChildRow({
   child,
   onSell,
-  onEdit,
   selectable,
   selected,
   onToggleSelect,
 }: {
   child: Item
   onSell: () => void
-  onEdit: () => void
   selectable?: boolean
   selected?: boolean
   onToggleSelect?: () => void
@@ -205,16 +203,13 @@ function BundleChildRow({
         </div>
       </div>
       {!selectable && (
-        <div className="flex gap-1.5 mt-2">
-          <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onEdit} aria-label="Edytuj">
-            <Pencil size={14} />
-          </Button>
+        <div className="mt-2">
           {child.status === 'IN_STOCK' ? (
-            <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onSell}>
+            <Button variant="primary" size="sm" className="w-full justify-center" onClick={onSell}>
               Sprzedaj
             </Button>
           ) : (
-            <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={onSell}>
+            <Button variant="secondary" size="sm" className="w-full justify-center" onClick={onSell}>
               Edytuj sprzedaż
             </Button>
           )}
@@ -243,7 +238,6 @@ function BundleCard({
 }) {
   const [showOverlay, setShowOverlay] = useState(false)
   const [sellChild, setSellChild] = useState<Item | null>(null)
-  const [editChild, setEditChild] = useState<Item | null>(null)
   const [multiSell, setMultiSell] = useState(false)
   const [selectedChildIds, setSelectedChildIds] = useState<Set<string>>(new Set())
   const [groupSellItems, setGroupSellItems] = useState<Item[]>([])
@@ -316,7 +310,6 @@ function BundleCard({
                   key={child.id}
                   child={child}
                   onSell={() => { setSellChild(child); setShowOverlay(false) }}
-                  onEdit={() => { setEditChild(child); setShowOverlay(false) }}
                   selectable={multiSell}
                   selected={selectedChildIds.has(child.id)}
                   onToggleSelect={() => toggleChildSelect(child.id)}
@@ -399,11 +392,6 @@ function BundleCard({
         item={sellChild}
         open={!!sellChild}
         onClose={() => setSellChild(null)}
-      />
-      <EditItemModal
-        item={editChild}
-        open={!!editChild}
-        onClose={() => setEditChild(null)}
       />
       <GroupSellModal
         items={groupSellItems}
