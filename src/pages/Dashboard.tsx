@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CalendarDays,
@@ -7,8 +8,7 @@ import {
   Warehouse,
   Clock,
 } from 'lucide-react'
-import { useItems } from '../features/items/queries'
-import { usePhotoUrl } from '../features/items/queries'
+import { useItems, useAllSoldBundleChildren, usePhotoUrl } from '../features/items/queries'
 import StatCard from '../components/charts/StatCard'
 import ProgressBar from '../components/charts/ProgressBar'
 import QuarterBarChartCard from '../components/charts/QuarterBarChartCard'
@@ -88,7 +88,16 @@ function DashboardSkeleton() {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const { data: items = [], isLoading } = useItems({})
+  const { data: items = [], isLoading: loadingItems } = useItems({})
+  const { data: allSoldChildren = [], isLoading: loadingChildren } = useAllSoldBundleChildren()
+  const isLoading = loadingItems || loadingChildren
+
+  // For sales metrics: regular items (non-bundle-parents) + sold bundle children.
+  // Bundle parents are excluded to avoid double-counting when a whole bundle is sold.
+  const salesItems = useMemo(
+    () => [...items.filter(i => i.bundle_size == null), ...allSoldChildren],
+    [items, allSoldChildren],
+  )
 
   if (isLoading) {
     return (
@@ -115,24 +124,24 @@ export default function Dashboard() {
   }
 
   const { year, quarter, to: qEnd } = getCurrentQuarter()
-  const qRevenue   = currentQuarterRevenue(items)
+  const qRevenue   = currentQuarterRevenue(salesItems)
   const qPercent   = (qRevenue / QUARTERLY_LIMIT_PLN) * 100
   const daysLeft   = daysLeftInQuarter()
   const remaining  = QUARTERLY_LIMIT_PLN - qRevenue
 
   const kpis = [
-    { label: 'Sprzedaż',          value: formatCurrency(mtdRevenue(items)),         icon: <CalendarDays size={18} /> },
-    { label: 'Zysk',              value: formatCurrency(mtdProfit(items)),           icon: <TrendingUp size={18} /> },
-    { label: 'Średnia marża',     value: `${averageMargin(items).toFixed(1)} %`,    icon: <Percent size={18} /> },
-    { label: 'Sztuk w magazynie', value: String(inventoryCount(items)),             icon: <Package size={18} /> },
-    { label: 'Wartość magazynu',  value: formatCurrency(inventoryValue(items)),     icon: <Warehouse size={18} /> },
-    { label: 'Śr. czas w magazynie', value: `${averageDaysOnShelf(items)} dni`,     icon: <Clock size={18} /> },
+    { label: 'Sprzedaż',          value: formatCurrency(mtdRevenue(salesItems)),      icon: <CalendarDays size={18} /> },
+    { label: 'Zysk',              value: formatCurrency(mtdProfit(salesItems)),        icon: <TrendingUp size={18} /> },
+    { label: 'Średnia marża',     value: `${averageMargin(items).toFixed(1)} %`,       icon: <Percent size={18} /> },
+    { label: 'Sztuk w magazynie', value: String(inventoryCount(items)),                icon: <Package size={18} /> },
+    { label: 'Wartość magazynu',  value: formatCurrency(inventoryValue(items)),        icon: <Warehouse size={18} /> },
+    { label: 'Śr. czas w magazynie', value: `${averageDaysOnShelf(items)} dni`,        icon: <Clock size={18} /> },
   ]
 
-  const quartSeries = cumulativeQuarterSeries(items)
-  const profitByCat = profitByCategory(items)
+  const quartSeries = cumulativeQuarterSeries(salesItems)
+  const profitByCat = profitByCategory(salesItems)
   const invByCat    = inventoryByCategory(items)
-  const topSales    = topProfitableSales(items)
+  const topSales    = topProfitableSales(salesItems)
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-6 pb-10 space-y-6">
