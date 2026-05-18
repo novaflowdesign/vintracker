@@ -22,6 +22,12 @@ export default function Layout() {
   const { signOut } = useAuth()
 
   return (
+    <>
+    {/* Fixed cover that hides scrolling content behind the iOS status bar */}
+    <div
+      className="fixed top-0 inset-x-0 z-50 bg-gray-50 dark:bg-slate-950 pointer-events-none"
+      style={{ height: 'env(safe-area-inset-top)' }}
+    />
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 md:flex" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 px-3 py-6">
@@ -104,5 +110,6 @@ export default function Layout() {
         )}
       </nav>
     </div>
+    </>
   )
 }

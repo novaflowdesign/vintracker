@@ -13,7 +13,7 @@ import Settings from './pages/Settings'
 export default function App() {
   return (
     <>
-    <Toaster richColors position="bottom-center" />
+    <Toaster richColors position="bottom-center" offset="calc(4.5rem + env(safe-area-inset-bottom))" />
     <BrowserRouter basename="/vintracker">
       <AuthProvider>
         <Routes>

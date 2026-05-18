@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, Search } from 'lucide-react'
+import { Package, Search, ShoppingBag, X } from 'lucide-react'
 import { toast } from 'sonner'
 import InventoryCard, { CardSkeleton } from '../features/items/InventoryCard'
 import SellModal from '../features/items/SellModal'
 import EditItemModal from '../features/items/EditItemModal'
+import GroupSellModal from '../features/items/GroupSellModal'
 import Select from '../components/Select'
 import { useItems, useDeleteItem } from '../features/items/queries'
 import { CATEGORIES } from '../lib/constants'
@@ -27,8 +28,11 @@ export default function Inventory() {
   const [category, setCategory] = useState('')
   const [sort,     setSort]     = useState<SortOrder>('newest')
 
-  const [sellItem, setSellItem] = useState<Item | null>(null)
-  const [editItem, setEditItem] = useState<Item | null>(null)
+  const [sellItem,    setSellItem]    = useState<Item | null>(null)
+  const [editItem,    setEditItem]    = useState<Item | null>(null)
+  const [selectMode,  setSelectMode]  = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [groupSell,   setGroupSell]   = useState(false)
 
   const { data: items, isLoading } = useItems({
     status:   'IN_STOCK',
@@ -49,10 +53,45 @@ export default function Inventory() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const selectedItems = (items ?? []).filter(i => selectedIds.has(i.id))
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-8">
       <div className="mx-auto max-w-5xl px-4 pt-6">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Magazyn</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Magazyn</h1>
+          {!isLoading && !!items?.length && (
+            selectMode ? (
+              <button
+                onClick={exitSelectMode}
+                className="text-sm text-slate-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors"
+              >
+                Anuluj
+              </button>
+            ) : (
+              <button
+                onClick={() => setSelectMode(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                <ShoppingBag size={16} />
+                Sprzedaj kilka
+              </button>
+            )
+          )}
+        </div>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -106,6 +145,9 @@ export default function Inventory() {
                 onSell={() => setSellItem(item)}
                 onEdit={() => setEditItem(item)}
                 onDelete={() => handleDelete(item)}
+                selectable={selectMode}
+                selected={selectedIds.has(item.id)}
+                onToggleSelect={() => toggleSelect(item.id)}
               />
             ))}
           </div>
@@ -122,6 +164,42 @@ export default function Inventory() {
         open={!!editItem}
         onClose={() => setEditItem(null)}
       />
+      <GroupSellModal
+        items={selectedItems}
+        open={groupSell}
+        onClose={() => setGroupSell(false)}
+        onSuccess={exitSelectMode}
+      />
+
+      {/* Floating action bar */}
+      {selectMode && (
+        <div
+          className="fixed inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[480px] z-40 bg-slate-900 dark:bg-slate-700 text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.75rem)' }}
+        >
+          <div className="flex-1 min-w-0">
+            {selectedIds.size === 0
+              ? <p className="text-sm text-slate-400">Zaznacz rzeczy do sprzedaży</p>
+              : <p className="text-sm font-medium">Zaznaczono: {selectedIds.size} {selectedIds.size === 1 ? 'rzecz' : selectedIds.size < 5 ? 'rzeczy' : 'rzeczy'}</p>
+            }
+          </div>
+          {selectedIds.size >= 2 && (
+            <button
+              onClick={() => setGroupSell(true)}
+              className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            >
+              Sprzedaj razem
+            </button>
+          )}
+          <button
+            onClick={exitSelectMode}
+            className="shrink-0 text-slate-400 hover:text-white p-1 transition-colors"
+            aria-label="Anuluj"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

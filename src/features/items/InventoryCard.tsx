@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Package, Pencil, Trash2, X, Search } from 'lucide-react'
+import { Package, Pencil, Trash2, X, Search, Check } from 'lucide-react'
+import clsx from 'clsx'
 import Button from '../../components/Button'
 import SellModal from './SellModal'
 import EditItemModal from './EditItemModal'
@@ -135,10 +136,16 @@ function BundleCard({
   item,
   onEdit,
   onDelete,
+  selectable,
+  selected,
+  onToggleSelect,
 }: {
   item: Item
   onEdit: () => void
   onDelete: () => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const [showOverlay, setShowOverlay] = useState(false)
   const [sellChild, setSellChild] = useState<Item | null>(null)
@@ -153,8 +160,18 @@ function BundleCard({
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col relative">
-        <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
+      <div
+        className={clsx(
+          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all',
+          selectable && 'cursor-pointer',
+          selectable && selected && 'ring-2 ring-emerald-500',
+        )}
+        onClick={selectable ? onToggleSelect : undefined}
+      >
+        <div className="relative">
+          <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
+          {selectable && <SelectOverlay selected={!!selected} />}
+        </div>
 
         {/* Children overlay */}
         {showOverlay && (
@@ -223,28 +240,30 @@ function BundleCard({
 
           <div className="flex-1" />
 
+          {!selectable && (
           <div className="mt-auto pt-4 flex gap-2">
             <Button
               variant="primary"
               size="sm"
               className="flex-1"
-              onClick={() => setShowOverlay(true)}
+              onClick={e => { e.stopPropagation(); setShowOverlay(true) }}
             >
               Sprzedaj
             </Button>
-            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edytuj">
+            <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); onEdit() }} aria-label="Edytuj">
               <Pencil size={16} />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={onDelete}
+              onClick={e => { e.stopPropagation(); onDelete() }}
               aria-label="Usuń"
               className="text-rose-500 hover:bg-rose-50"
             >
               <Trash2 size={16} />
             </Button>
           </div>
+          )}
         </div>
       </div>
 
@@ -262,6 +281,23 @@ function BundleCard({
   )
 }
 
+// ── selectable checkbox overlay ───────────────────────────────────────────────
+
+function SelectOverlay({ selected }: { selected: boolean }) {
+  return (
+    <div
+      className={clsx(
+        'absolute top-2 left-2 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
+        selected
+          ? 'bg-emerald-500 border-emerald-500'
+          : 'bg-white/80 dark:bg-slate-800/80 border-gray-300 dark:border-slate-500',
+      )}
+    >
+      {selected && <Check size={13} className="text-white" strokeWidth={3} />}
+    </div>
+  )
+}
+
 // ── regular card ──────────────────────────────────────────────────────────────
 
 function RegularCard({
@@ -269,17 +305,33 @@ function RegularCard({
   onSell,
   onEdit,
   onDelete,
+  selectable,
+  selected,
+  onToggleSelect,
 }: {
   item: Item
   onSell: () => void
   onEdit: () => void
   onDelete: () => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }) {
   const days = daysSince(item.purchase_date)
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-      <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
+    <div
+      className={clsx(
+        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all',
+        selectable && 'cursor-pointer',
+        selectable && selected && 'ring-2 ring-emerald-500',
+      )}
+      onClick={selectable ? onToggleSelect : undefined}
+    >
+      <div className="relative">
+        <PhotoThumbnail path={item.photo_path} className="aspect-square w-full" />
+        {selectable && <SelectOverlay selected={!!selected} />}
+      </div>
 
       <div className="p-4 flex flex-col flex-1">
         <p className="font-semibold text-gray-900 dark:text-white truncate">{item.title}</p>
@@ -299,23 +351,25 @@ function RegularCard({
           {days === 1 ? 'dzień' : 'dni'} w magazynie
         </p>
 
-        <div className="mt-auto pt-4 flex gap-2">
-          <Button variant="primary" size="sm" className="flex-1" onClick={onSell}>
-            Sprzedane
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edytuj">
-            <Pencil size={16} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            aria-label="Usuń"
-            className="text-rose-500 hover:bg-rose-50"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
+        {!selectable && (
+          <div className="mt-auto pt-4 flex gap-2">
+            <Button variant="primary" size="sm" className="flex-1" onClick={onSell}>
+              Sprzedane
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edytuj">
+              <Pencil size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              aria-label="Usuń"
+              className="text-rose-500 hover:bg-rose-50"
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -328,11 +382,14 @@ interface Props {
   onSell: () => void
   onEdit: () => void
   onDelete: () => void
+  selectable?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
 }
 
-export default function InventoryCard({ item, onSell, onEdit, onDelete }: Props) {
+export default function InventoryCard({ item, onSell, onEdit, onDelete, selectable, selected, onToggleSelect }: Props) {
   const isBundle = item.bundle_size != null && item.bundle_id == null
   return isBundle
-    ? <BundleCard item={item} onEdit={onEdit} onDelete={onDelete} />
-    : <RegularCard item={item} onSell={onSell} onEdit={onEdit} onDelete={onDelete} />
+    ? <BundleCard item={item} onEdit={onEdit} onDelete={onDelete} selectable={selectable} selected={selected} onToggleSelect={onToggleSelect} />
+    : <RegularCard item={item} onSell={onSell} onEdit={onEdit} onDelete={onDelete} selectable={selectable} selected={selected} onToggleSelect={onToggleSelect} />
 }
