@@ -22,7 +22,8 @@ export default function AddItem() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [isBundle, setIsBundle] = useState(false)
-  const [bundleSize, setBundleSize] = useState(2)
+  const [bundleSizeInput, setBundleSizeInput] = useState('2')
+  const bundleSize = Math.max(2, parseInt(bundleSizeInput) || 2)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(
@@ -160,8 +161,9 @@ export default function AddItem() {
                 type="number"
                 min={2}
                 max={200}
-                value={bundleSize}
-                onChange={e => setBundleSize(Math.max(2, parseInt(e.target.value) || 2))}
+                value={bundleSizeInput}
+                onChange={e => setBundleSizeInput(e.target.value)}
+                onBlur={() => setBundleSizeInput(String(Math.max(2, parseInt(bundleSizeInput) || 2)))}
               />
               {unitPrice !== null && totalPrice > 0 && (
                 <p className="text-sm text-violet-700 dark:text-violet-400 font-medium">
