@@ -18,7 +18,7 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
   if (!path || !url) {
     return (
       <div className={`bg-gray-100 dark:bg-slate-700 flex items-center justify-center ${className}`}>
-        <Package size={28} className="text-gray-300 dark:text-slate-600" />
+        <Package size={24} className="text-gray-300 dark:text-slate-600" />
       </div>
     )
   }
@@ -31,7 +31,7 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
       >
         <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-          <Search size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+          <Search size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
         </div>
       </div>
       {lightbox && createPortal(
@@ -63,16 +63,19 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden animate-pulse">
-      <div className="w-full h-40 bg-gray-200 dark:bg-slate-700" />
-      <div className="p-4 space-y-2">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden animate-pulse">
+      <div className="w-2/5 min-h-[180px] bg-gray-200 dark:bg-slate-700 shrink-0" />
+      <div className="flex-1 p-4 flex flex-col gap-2">
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
         <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3 mt-2" />
         <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-2/3" />
-      </div>
-      <div className="px-4 pb-4">
-        <div className="h-12 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+        <div className="flex-1" />
+        <div className="h-11 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+        <div className="flex gap-2">
+          <div className="flex-1 h-11 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+          <div className="flex-1 h-11 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+        </div>
       </div>
     </div>
   )
@@ -84,13 +87,54 @@ function SelectOverlay({ selected }: { selected: boolean }) {
   return (
     <div
       className={clsx(
-        'absolute top-2.5 left-2.5 z-20 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all',
+        'absolute top-2 left-2 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
         selected
           ? 'bg-emerald-500 border-emerald-500'
           : 'bg-white/80 dark:bg-slate-800/80 border-gray-300 dark:border-slate-500',
       )}
     >
-      {selected && <Check size={14} className="text-white" strokeWidth={3} />}
+      {selected && <Check size={13} className="text-white" strokeWidth={3} />}
+    </div>
+  )
+}
+
+// ── action buttons ────────────────────────────────────────────────────────────
+
+function ActionButtons({
+  onPrimary,
+  primaryLabel,
+  onEdit,
+  onDelete,
+}: {
+  onPrimary: (e: React.MouseEvent) => void
+  primaryLabel: string
+  onEdit: (e: React.MouseEvent) => void
+  onDelete: (e: React.MouseEvent) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2 mt-3">
+      <button
+        onClick={onPrimary}
+        className="w-full flex items-center justify-center rounded-xl font-medium transition-colors py-3 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+      >
+        {primaryLabel}
+      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={onEdit}
+          aria-label="Edytuj"
+          className="flex-1 flex items-center justify-center rounded-xl transition-colors py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+        >
+          <Pencil size={18} className="text-slate-500 dark:text-slate-300" />
+        </button>
+        <button
+          onClick={onDelete}
+          aria-label="Usuń"
+          className="flex-1 flex items-center justify-center rounded-xl transition-colors py-3 bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/30 dark:hover:bg-rose-900/50"
+        >
+          <Trash2 size={18} className="text-rose-600 dark:text-rose-500" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -180,7 +224,7 @@ function BundleCard({
     <>
       <div
         className={clsx(
-          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all',
+          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden relative transition-all',
           selectable && 'cursor-pointer',
           selectable && selected && 'ring-2 ring-emerald-500',
         )}
@@ -212,81 +256,60 @@ function BundleCard({
           </div>
         )}
 
-        {/* Photo — full width */}
-        <div className="relative">
-          <PhotoThumbnail path={item.photo_path} className="w-full h-40" />
+        {/* Photo — left 40%, full height */}
+        <div className="relative w-2/5 shrink-0">
+          <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px]" />
           {selectable && <SelectOverlay selected={!!selected} />}
         </div>
 
-        {/* Info */}
-        <div className="px-4 pt-3 pb-0 flex-1">
-          <div className="flex items-start gap-2">
-            <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
-            <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
-              Zestaw
-            </span>
+        {/* Info + buttons — right side */}
+        <div className="flex-1 flex flex-col p-4 min-w-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-2">
+              <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
+              <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
+                Zestaw
+              </span>
+            </div>
+
+            {item.category && (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
+            )}
+
+            <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
+              {formatCurrency(Number(item.purchase_price))}
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
+                ({formatCurrency(unitPrice)}/szt.)
+              </span>
+            </p>
+
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+              {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
+            </p>
+
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <span>{soldCount}/{total} sprzed.</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
           </div>
 
-          {item.category && (
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
+          {!selectable && (
+            <ActionButtons
+              primaryLabel="Sprzedaj"
+              onPrimary={e => { e.stopPropagation(); setShowOverlay(true) }}
+              onEdit={e => { e.stopPropagation(); onEdit() }}
+              onDelete={e => { e.stopPropagation(); onDelete() }}
+            />
           )}
-
-          <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
-            {formatCurrency(Number(item.purchase_price))}
-            <span className="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">
-              ({formatCurrency(unitPrice)}/szt.)
-            </span>
-          </p>
-
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w magazynie
-          </p>
-
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>{soldCount}/{total} sprzedanych</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
         </div>
-
-        {/* Buttons */}
-        {!selectable && (
-          <div className="flex gap-2 p-4">
-            <Button
-              variant="primary"
-              size="lg"
-              className="flex-1"
-              onClick={e => { e.stopPropagation(); setShowOverlay(true) }}
-            >
-              Sprzedaj
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="px-3.5"
-              onClick={e => { e.stopPropagation(); onEdit() }}
-              aria-label="Edytuj"
-            >
-              <Pencil size={18} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="px-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-              onClick={e => { e.stopPropagation(); onDelete() }}
-              aria-label="Usuń"
-            >
-              <Trash2 size={18} />
-            </Button>
-          </div>
-        )}
       </div>
 
       <SellModal
@@ -327,63 +350,47 @@ function RegularCard({
   return (
     <div
       className={clsx(
-        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all',
+        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden transition-all',
         selectable && 'cursor-pointer',
         selectable && selected && 'ring-2 ring-emerald-500',
       )}
       onClick={selectable ? onToggleSelect : undefined}
     >
-      {/* Photo — full width */}
-      <div className="relative">
-        <PhotoThumbnail path={item.photo_path} className="w-full h-40" />
+      {/* Photo — left 40%, full height */}
+      <div className="relative w-2/5 shrink-0">
+        <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px]" />
         {selectable && <SelectOverlay selected={!!selected} />}
       </div>
 
-      {/* Info */}
-      <div className="px-4 pt-3 pb-0 flex-1">
-        <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
+      {/* Info + buttons — right side */}
+      <div className="flex-1 flex flex-col p-4 min-w-0">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
 
-        {(item.brand || item.size) && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {[item.brand, item.size].filter(Boolean).join(' · ')}
+          {(item.brand || item.size) && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              {[item.brand, item.size].filter(Boolean).join(' · ')}
+            </p>
+          )}
+
+          <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
+            {formatCurrency(Number(item.purchase_price))}
           </p>
-        )}
 
-        <p className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-2">
-          {formatCurrency(Number(item.purchase_price))}
-        </p>
-
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-          {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w magazynie
-        </p>
-      </div>
-
-      {/* Buttons */}
-      {!selectable && (
-        <div className="flex gap-2 p-4">
-          <Button variant="primary" size="lg" className="flex-1" onClick={onSell}>
-            Sprzedane
-          </Button>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="px-3.5"
-            onClick={onEdit}
-            aria-label="Edytuj"
-          >
-            <Pencil size={18} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="px-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-            onClick={onDelete}
-            aria-label="Usuń"
-          >
-            <Trash2 size={18} />
-          </Button>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+            {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
+          </p>
         </div>
-      )}
+
+        {!selectable && (
+          <ActionButtons
+            primaryLabel="Sprzedane"
+            onPrimary={onSell}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        )}
+      </div>
     </div>
   )
 }
