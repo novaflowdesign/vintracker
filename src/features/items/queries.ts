@@ -44,6 +44,13 @@ export function useBundleChildren(bundleId: string) {
   })
 }
 
+export function useAllSoldBundleChildren() {
+  return useQuery({
+    queryKey: [ITEMS_KEY, 'sold-bundle-children'],
+    queryFn: api.listAllSoldBundleChildren,
+  })
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function invalidateItems(qc: ReturnType<typeof useQueryClient>) {

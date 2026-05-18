@@ -39,6 +39,20 @@ export async function listItems(filters?: {
   return (data ?? []) as Item[]
 }
 
+export async function listAllSoldBundleChildren(): Promise<Item[]> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+  const { data, error } = await supabase
+    .from('items')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'SOLD')
+    .not('bundle_id', 'is', null)
+    .order('sale_date', { ascending: false })
+  if (error) throw new Error(`Błąd pobierania: ${error.message}`)
+  return (data ?? []) as Item[]
+}
+
 export async function listBundleChildren(bundleId: string): Promise<Item[]> {
   const { data, error } = await supabase
     .from('items')
