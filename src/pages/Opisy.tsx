@@ -270,7 +270,7 @@ function BundleChildrenSheet({
                 return (
                   <button
                     key={child.id}
-                    onClick={() => onSelectChild({ ...child, photo_path: photoPath })}
+                    onClick={() => onSelectChild({ ...child, photo_path: photoPath, category: child.category ?? bundle.category })}
                     className="relative rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm text-left group transition-all active:scale-95"
                   >
                     <ItemThumb path={photoPath} className="w-full aspect-square" />
