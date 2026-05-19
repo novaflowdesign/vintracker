@@ -96,18 +96,34 @@ function generateShoeDescriptionDirect(meta: {
   return { title, description }
 }
 
+const POKEMON_HASHTAGS = '#pokemon #pokemontcg #kartypokemon #zestawkartpokemon #pokemonpolska #pokemonpsa #pokemonpsa10 #pokemonbox #pokemonetb #pokemonbooster #pokemonboosterbox #pokemoncollection #pokemoncards #pokemonkort'
+
 function generatePokemonCardDescriptionDirect(meta: {
   title?: string
 }): { title: string; description: string } {
-  const title = meta.title ?? '[Tytuł z magazynu]'
+  const rawTitle  = meta.title ?? '[Tytuł z magazynu]'
+  const parsed    = parsePokemonTitle(rawTitle)
+  const setCode   = parsed.setCode ?? ''
+  const setName   = parsed.setName ?? setCode
+  const cardNum   = parsed.cardNumber ?? ''
 
-  const description = `${title}
+  const title = `Pokémon TCG – ${rawTitle}${setName ? ` ${setName}` : ''}`
 
-✅ Oryginalna karta Pokemon TCG
-📦 Karta w bardzo dobrym stanie
+  const description = `✨ Pokémon TCG – ${rawTitle}
+
+🆔 Numer karty: ${setCode ? `${setCode} ` : ''}${cardNum || '[Numer karty]'}
+
+📅 Dodatek: ${setName || '[Nazwa dodatku]'}
+
+📦 Booster → Sleeve -> Toploader
+
+✅ Oryginalna karta Pokémon
+
 🚚 Wysyłka: InPost – dobrze zabezpieczona
 
-#pokemon #pokemontcg #kartypokemon #tcg #pokemontcgpolska #kartypokemont`
+💰 Rabat przy zakupie kilku kart!
+
+${POKEMON_HASHTAGS}`
 
   return { title, description }
 }
@@ -116,16 +132,22 @@ function generatePokemonBoxDescriptionDirect(meta: {
   title?: string
   metadata?: Record<string, string> | null
 }): { title: string; description: string } {
-  const title   = meta.title ?? '[Tytuł z magazynu]'
-  const boxType = BOX_TYPE_LABELS[meta.metadata?.box_type ?? ''] ?? meta.metadata?.box_type ?? '[Rodzaj boxa]'
+  const rawTitle = meta.title ?? '[Tytuł z magazynu]'
+  const boxType  = BOX_TYPE_LABELS[meta.metadata?.box_type ?? ''] ?? meta.metadata?.box_type ?? '[Rodzaj boxa]'
 
-  const description = `${title}
+  const title = `Pokémon TCG - ${rawTitle}`
+
+  const description = `✨ Pokémon TCG – ${rawTitle}
 
 📦 Rodzaj: ${boxType}
+
 ✅ Oryginalny produkt Pokemon TCG – fabrycznie zapakowany
+
 🚚 Wysyłka: InPost – dobrze zabezpieczona
 
-#pokemon #pokemontcg #pokemonbox #etb #tcg #pokemontcgpolska #boxy`
+💰 Rabat przy zakupie kilku rzeczy!
+
+${POKEMON_HASHTAGS}`
 
   return { title, description }
 }
@@ -134,33 +156,32 @@ function generateSlabDescriptionDirect(meta: {
   title?: string
   metadata?: Record<string, string> | null
 }): { title: string; description: string } {
-  const rawTitle  = meta.title ?? '[Tytuł z magazynu]'
-  const company   = meta.metadata?.slab_company ?? 'PSA'
-  const grade     = meta.metadata?.slab_grade   ?? '?'
+  const rawTitle = meta.title ?? '[Tytuł z magazynu]'
+  const company  = meta.metadata?.slab_company ?? 'PSA'
+  const grade    = meta.metadata?.slab_grade   ?? '?'
 
-  const parsed      = parsePokemonTitle(rawTitle)
-  const pokemonName = parsed.pokemonName || rawTitle
-  const cardNumber  = parsed.cardNumber ?? ''
-  const setCode     = parsed.setCode    ?? ''
-  const setName     = parsed.setName    ?? setCode
+  const parsed   = parsePokemonTitle(rawTitle)
+  const setCode  = parsed.setCode   ?? ''
+  const setName  = parsed.setName   ?? setCode
+  const cardNum  = parsed.cardNumber ?? ''
 
-  const gradeLabel  = `${company} ${grade}`
-  const title       = `${gradeLabel} ${rawTitle}`
+  const title = `Pokémon TCG – ${rawTitle}`
 
-  const setLine     = setCode
-    ? `📦 Seria: ${setName !== setCode ? `${setName} (${setCode})` : setCode}\n`
-    : ''
-  const numberLine  = cardNumber ? `📋 Numer: ${cardNumber}\n` : ''
+  const description = `✨ Pokémon TCG – ${rawTitle}
 
-  const description = `${gradeLabel} ${rawTitle}
+🏆 Nota: ${company} ${grade}
 
-🏆 Nota: ${gradeLabel}
-🃏 Karta: ${pokemonName}
-${numberLine}${setLine}
+🆔 Numer karty: ${setCode ? `${setCode} ` : ''}${cardNum || '[Numer karty]'}
+
+📅 Dodatek: ${setName || '[Nazwa dodatku]'}
+
 ✅ Oryginalny slab ${company}
+
 🚚 Wysyłka: InPost – dobrze zabezpieczona
 
-#pokemon #pokemontcg #${company.toLowerCase()} #${company.toLowerCase()}graded #slab #gradedcard #pokemonslab #pokemontcgpolska`
+💰 Rabat przy zakupie kilku rzeczy!
+
+${POKEMON_HASHTAGS}`
 
   return { title, description }
 }

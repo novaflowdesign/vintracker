@@ -64,7 +64,7 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
 
   function stepGrade(delta: number) {
     const next = Math.round((grade + delta) * 2) / 2
-    if (next < 0 || next > 10) return
+    if (next < 1 || next > 10) return
     setValue('meta_slab_grade', next.toString(), { shouldValidate: true })
   }
 
@@ -190,7 +190,7 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
               <button
                 type="button"
                 onClick={() => stepGrade(-0.5)}
-                disabled={grade <= 0}
+                disabled={grade <= 1}
                 className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 −
