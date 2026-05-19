@@ -49,15 +49,11 @@ function GenerationModal({
     }
   }, [item.id])
 
-  useEffect(() => {
-    if (templates.length === 0 || selectedId) return
-    const match = templates.find(t => t.name === item.category)
-    setSelectedId(match?.id ?? templates[0]?.id ?? '')
-  }, [templates]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const hasKey = !!getGeminiKey()
   const isShoe = item.category === 'Buty piłkarskie'
-  const selectedTemplate = templates.find(t => t.id === selectedId) ?? templates[0]
+  const defaultTemplateId = templates.find(t => t.name === item.category)?.id ?? templates[0]?.id ?? ''
+  const activeTemplateId  = selectedId || defaultTemplateId
+  const selectedTemplate  = templates.find(t => t.id === activeTemplateId)
 
   async function generate() {
     if (!isShoe && (!photoUrl || !selectedTemplate)) return
@@ -79,7 +75,7 @@ function GenerationModal({
       setResult(res)
       setEditTitle(res.title)
       setEditDesc(res.description)
-      const desc: GeneratedDesc = { ...res, templateId: selectedId, at: new Date().toISOString() }
+      const desc: GeneratedDesc = { ...res, templateId: activeTemplateId, at: new Date().toISOString() }
       saveGeneratedDesc(item.id, desc)
       onSaved(item.id, desc)
     } catch (err) {
@@ -148,7 +144,7 @@ function GenerationModal({
           {/* Template selector — not needed for shoes */}
           {!isShoe && templates.length > 1 && (
             <select
-              value={selectedId}
+              value={activeTemplateId}
               onChange={e => setSelectedId(e.target.value)}
               className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-4"
             >
