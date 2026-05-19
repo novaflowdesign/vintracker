@@ -10,8 +10,28 @@ import { itemSchema, type ItemFormData } from '../features/items/itemSchema'
 import ItemFormFields from '../features/items/ItemFormFields'
 import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
-import { formatCurrency } from '../utils/format'
+import type { BundleChildInput } from '../features/items/api'
+import { CATEGORIES } from '../lib/constants'
 import { analyzeCardPhoto, getGeminiKey } from '../lib/gemini'
+
+// ── per-item draft type for bundle mode ───────────────────────────────────────
+
+type BundleItemDraft = {
+  id: string
+  title: string
+  category: string
+  price: string
+  photoFile: File | null
+  photoPreview: string | null
+  analyzing: boolean
+}
+
+function makeDraft(idx: number): BundleItemDraft {
+  return { id: `draft-${Date.now()}-${idx}`, title: '', category: '', price: '', photoFile: null, photoPreview: null, analyzing: false }
+}
+
+const ANALYZABLE = ['Karty Pokemon', 'Slab Pokemon']
+const categoryOptions = [{ value: '', label: '— wybierz —' }, ...CATEGORIES.map(c => ({ value: c, label: c }))]
 
 export default function AddItem() {
   const navigate = useNavigate()
@@ -20,20 +40,51 @@ export default function AddItem() {
   const createBundle = useCreateBundle()
   const updateItem = useUpdateItem()
 
+  // ── single-item photo ──────────────────────────────────────────────────────
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // ── bundle mode ────────────────────────────────────────────────────────────
   const [isBundle, setIsBundle] = useState(() => searchParams.get('bundle') === '1')
   const [bundleSizeInput, setBundleSizeInput] = useState('2')
   const bundleSize = Math.max(2, parseInt(bundleSizeInput) || 2)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [totalBundlePrice, setTotalBundlePrice] = useState('')
+  const [bundleItems, setBundleItems] = useState<BundleItemDraft[]>(() => [makeDraft(0), makeDraft(1)])
+  const [targetItemId, setTargetItemId] = useState<string | null>(null)
+  const bundleFileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(
-    () => () => { if (photoPreview) URL.revokeObjectURL(photoPreview) },
-    [photoPreview],
-  )
+  // sync bundleItems array length to bundleSize
+  useEffect(() => {
+    setBundleItems(prev => {
+      if (bundleSize <= prev.length) return prev.slice(0, bundleSize)
+      const extra = Array.from({ length: bundleSize - prev.length }, (_, i) => makeDraft(prev.length + i))
+      return [...prev, ...extra]
+    })
+  }, [bundleSize])
 
+  // cleanup previews on unmount
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
+      bundleItems.forEach(item => { if (item.photoPreview) URL.revokeObjectURL(item.photoPreview) })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── form ───────────────────────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
+  const watchedCategory = form.watch('category')
+  const canAnalyze = !!photoFile && !!getGeminiKey() && ANALYZABLE.includes(watchedCategory ?? '')
+
+  // for bundle mode: purchase_price is computed from items, not from form
+  useEffect(() => {
+    if (isBundle) form.setValue('purchase_price', 0)
+  }, [isBundle]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── single-item photo handlers ─────────────────────────────────────────────
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -49,12 +100,6 @@ export default function AddItem() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
-  const watchedPrice    = form.watch('purchase_price')
-  const watchedCategory = form.watch('category')
-  const canAnalyze = !!photoFile && !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
-
   async function analyzePhoto() {
     if (!photoFile) return
     setAnalyzing(true)
@@ -68,9 +113,42 @@ export default function AddItem() {
       setAnalyzing(false)
     }
   }
-  const totalPrice = Number(watchedPrice) || 0
-  const unitPrice = isBundle && bundleSize >= 2 ? totalPrice / bundleSize : null
 
+  // ── bundle price helpers ───────────────────────────────────────────────────
+  function dividePriceEqually() {
+    const total = parseFloat(totalBundlePrice.replace(',', '.'))
+    if (!total || bundleSize < 1) return
+    const unit = (total / bundleSize).toFixed(2)
+    setBundleItems(prev => prev.map(item => ({ ...item, price: unit })))
+  }
+
+  // ── bundle item photo handlers ─────────────────────────────────────────────
+  function handleBundleItemPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !targetItemId) return
+    const preview = URL.createObjectURL(file)
+    setBundleItems(prev => prev.map(item =>
+      item.id === targetItemId ? { ...item, photoFile: file, photoPreview: preview } : item
+    ))
+    if (bundleFileRef.current) bundleFileRef.current.value = ''
+  }
+
+  // ── per-item AI analyze ────────────────────────────────────────────────────
+  async function analyzeItemPhoto(itemId: string) {
+    const item = bundleItems.find(i => i.id === itemId)
+    if (!item?.photoFile) { toast.error('Brak zdjęcia do analizy'); return }
+    setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, analyzing: true } : i))
+    try {
+      const { title } = await analyzeCardPhoto(item.photoFile)
+      setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, title, analyzing: false } : i))
+      toast.success('Tytuł uzupełniony')
+    } catch (err) {
+      setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, analyzing: false } : i))
+      toast.error(err instanceof Error ? err.message : 'Błąd analizy')
+    }
+  }
+
+  // ── submit ─────────────────────────────────────────────────────────────────
   async function onSubmit(data: ItemFormData) {
     setSubmitting(true)
     try {
@@ -83,34 +161,62 @@ export default function AddItem() {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { meta_shoe_level, meta_shoe_type, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
-      const input = {
-        ...formData,
-        purchase_price:  Number(data.purchase_price),
-        description:     data.description     || null,
-        category:        data.category        || null,
-        brand:           data.brand           || null,
-        size:            data.size            || null,
-        condition:       data.condition       || null,
-        received_date:   data.received_date   || null,
-        purchase_source: data.purchase_source || null,
-        notes:           data.notes           || null,
-        metadata:        Object.keys(meta).length ? meta : null,
-      }
 
       if (isBundle) {
-        const { parent } = await createBundle.mutateAsync({ input, bundleSize })
-        if (photoFile) {
+        const childInputs: BundleChildInput[] = bundleItems.map((item, i) => ({
+          title:          item.title.trim() || `Przedmiot ${i + 1}`,
+          category:       item.category || null,
+          purchase_price: parseFloat(item.price.replace(',', '.')) || 0,
+        }))
+        const totalPrice = childInputs.reduce((s, c) => s + c.purchase_price, 0)
+
+        const { parent, children } = await createBundle.mutateAsync({
+          input: {
+            ...formData,
+            purchase_price: totalPrice,
+            description:     formData.description     || null,
+            category:        formData.category        || null,
+            brand:           formData.brand           || null,
+            size:            formData.size            || null,
+            condition:       formData.condition       || null,
+            received_date:   formData.received_date   || null,
+            purchase_source: formData.purchase_source || null,
+            notes:           formData.notes           || null,
+            metadata:        Object.keys(meta).length ? meta : null,
+          },
+          childInputs,
+        })
+
+        // upload per-item photos; use first child's path as parent cover
+        let parentPhotoPatch: string | null = null
+        await Promise.all(children.map(async (child, i) => {
+          const draft = bundleItems[i]
+          if (!draft?.photoFile) return
           try {
-            const path = await uploadPhoto(parent.id, photoFile)
-            await updateItem.mutateAsync({ id: parent.id, patch: { photo_path: path } })
-          } catch {
-            toast.warning('Zestaw dodany, ale zdjęcie nie zostało przesłane.')
-            navigate('/inventory')
-            return
-          }
+            const path = await uploadPhoto(child.id, draft.photoFile)
+            await updateItem.mutateAsync({ id: child.id, patch: { photo_path: path } })
+            if (i === 0) parentPhotoPatch = path
+          } catch { /* photo upload failure is non-fatal */ }
+        }))
+        if (parentPhotoPatch) {
+          await updateItem.mutateAsync({ id: parent.id, patch: { photo_path: parentPhotoPatch } })
         }
+
         toast.success(`Zestaw (${bundleSize} szt.) dodany do magazynu!`)
       } else {
+        const input = {
+          ...formData,
+          purchase_price:  Number(data.purchase_price),
+          description:     formData.description     || null,
+          category:        formData.category        || null,
+          brand:           formData.brand           || null,
+          size:            formData.size            || null,
+          condition:       formData.condition       || null,
+          received_date:   formData.received_date   || null,
+          purchase_source: formData.purchase_source || null,
+          notes:           formData.notes           || null,
+          metadata:        Object.keys(meta).length ? meta : null,
+        }
         const item = await createItem.mutateAsync(input)
         if (photoFile) {
           try {
@@ -139,49 +245,6 @@ export default function AddItem() {
         <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Dodaj rzecz</h1>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Photo picker */}
-          <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
-            {photoPreview ? (
-              <div className="flex items-end gap-3">
-                <div className="relative w-40 h-40 rounded-xl overflow-hidden shrink-0">
-                  <img src={photoPreview} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={removePhoto}
-                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                {canAnalyze && (
-                  <button
-                    type="button"
-                    onClick={analyzePhoto}
-                    disabled={analyzing}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
-                  >
-                    {analyzing
-                      ? <><Loader2 size={14} className="animate-spin" /> Analizuję…</>
-                      : <><Sparkles size={14} /> Analizuj</>
-                    }
-                  </button>
-                )}
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
-                <ImagePlus size={28} className="text-gray-400 dark:text-slate-500" />
-                <span className="text-xs text-gray-400 dark:text-slate-500 mt-2">Dodaj zdjęcie</span>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </label>
-            )}
-          </div>
 
           {/* Bundle toggle */}
           <label className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 cursor-pointer hover:border-violet-400 transition-colors">
@@ -194,15 +257,46 @@ export default function AddItem() {
             <Package size={18} className="text-violet-600 shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Dodaj jako zestaw</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Cena zostanie podzielona równo na każdy przedmiot</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Każdy przedmiot ma własne zdjęcie, tytuł i cenę</p>
             </div>
           </label>
 
-          {/* Bundle size input */}
-          {isBundle && (
-            <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-4 space-y-3">
+          {isBundle ? (
+            /* ── BUNDLE MODE ──────────────────────────────────────────────── */
+            <div className="space-y-4">
+              {/* Bundle label */}
               <Input
-                label="Liczba przedmiotów w zestawie"
+                label="Tytuł zestawu *"
+                placeholder="np. Scarlet & Violet booster pack"
+                error={form.formState.errors.title?.message}
+                {...form.register('title')}
+              />
+
+              {/* Total price + divide */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Input
+                    label="Łączna cena zamówienia"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    suffix="zł"
+                    value={totalBundlePrice}
+                    onChange={e => setTotalBundlePrice(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={dividePriceEqually}
+                  className="shrink-0 px-4 py-2.5 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
+                >
+                  Podziel równo
+                </button>
+              </div>
+
+              {/* Bundle size */}
+              <Input
+                label="Liczba przedmiotów"
                 type="number"
                 min={2}
                 max={200}
@@ -210,15 +304,162 @@ export default function AddItem() {
                 onChange={e => setBundleSizeInput(e.target.value)}
                 onBlur={() => setBundleSizeInput(String(Math.max(2, parseInt(bundleSizeInput) || 2)))}
               />
-              {unitPrice !== null && totalPrice > 0 && (
-                <p className="text-sm text-violet-700 dark:text-violet-400 font-medium">
-                  Cena za sztukę: {formatCurrency(unitPrice)}
-                </p>
-              )}
-            </div>
-          )}
 
-          <ItemFormFields form={form} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
+              {/* Per-item rows */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                  {bundleItems.map((item, i) => {
+                    const canAnalyzeItem = !!getGeminiKey() && !!item.photoFile && ANALYZABLE.includes(item.category)
+                    return (
+                      <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-2">
+                        {/* row 1: number, photo, analyze, title */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 w-5 shrink-0 text-right">{i + 1}.</span>
+                          <button
+                            type="button"
+                            onClick={() => { setTargetItemId(item.id); bundleFileRef.current?.click() }}
+                            className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-emerald-500 transition-colors flex items-center justify-center bg-gray-50 dark:bg-slate-700"
+                          >
+                            {item.photoPreview
+                              ? <img src={item.photoPreview} alt="" className="w-full h-full object-cover" />
+                              : <ImagePlus size={14} className="text-gray-400 dark:text-slate-500" />
+                            }
+                          </button>
+                          {canAnalyzeItem && (
+                            <button
+                              type="button"
+                              disabled={item.analyzing}
+                              onClick={() => analyzeItemPhoto(item.id)}
+                              className="shrink-0 p-2 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-40 transition-colors"
+                              title="Analizuj zdjęcie"
+                            >
+                              {item.analyzing
+                                ? <Loader2 size={14} className="animate-spin" />
+                                : <Sparkles size={14} />
+                              }
+                            </button>
+                          )}
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, title: e.target.value } : x))}
+                            placeholder={`Przedmiot ${i + 1}`}
+                            className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                          />
+                        </div>
+                        {/* row 2: category + price */}
+                        <div className="flex gap-2 pl-7">
+                          <select
+                            value={item.category}
+                            onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, category: e.target.value } : x))}
+                            className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition appearance-none"
+                          >
+                            {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                          <div className="relative shrink-0">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.price}
+                              onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, price: e.target.value } : x))}
+                              placeholder="0.00"
+                              className="w-24 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 pr-7 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* hidden file input for bundle item photos */}
+              <input ref={bundleFileRef} type="file" accept="image/*" className="hidden" onChange={handleBundleItemPhotoChange} />
+
+              {/* shared fields */}
+              <div className="border-t border-gray-100 dark:border-slate-700 pt-4 space-y-4">
+                <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Wspólne dane</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Data zakupu *"
+                    type="date"
+                    defaultValue={new Date().toISOString().split('T')[0]}
+                    error={form.formState.errors.purchase_date?.message}
+                    {...form.register('purchase_date')}
+                  />
+                  <Input
+                    label="Data przyjęcia na magazyn"
+                    type="date"
+                    hint="Zostaw puste jeśli już masz."
+                    error={form.formState.errors.received_date?.message}
+                    {...form.register('received_date')}
+                  />
+                </div>
+                <Input
+                  label="Źródło zakupu"
+                  placeholder=""
+                  {...form.register('purchase_source')}
+                />
+                <Input
+                  label="Notatki"
+                  placeholder=""
+                  {...form.register('notes')}
+                />
+              </div>
+            </div>
+          ) : (
+            /* ── SINGLE ITEM MODE ─────────────────────────────────────────── */
+            <>
+              {/* Photo picker */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
+                {photoPreview ? (
+                  <div className="flex items-end gap-3">
+                    <div className="relative w-40 h-40 rounded-xl overflow-hidden shrink-0">
+                      <img src={photoPreview} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={removePhoto}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    {canAnalyze && (
+                      <button
+                        type="button"
+                        onClick={analyzePhoto}
+                        disabled={analyzing}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                      >
+                        {analyzing
+                          ? <><Loader2 size={14} className="animate-spin" /> Analizuję…</>
+                          : <><Sparkles size={14} /> Analizuj</>
+                        }
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
+                    <ImagePlus size={28} className="text-gray-400 dark:text-slate-500" />
+                    <span className="text-xs text-gray-400 dark:text-slate-500 mt-2">Dodaj zdjęcie</span>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <ItemFormFields form={form} />
+            </>
+          )}
 
           <div className="flex gap-3 pt-2">
             <Button

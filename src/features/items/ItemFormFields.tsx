@@ -104,7 +104,7 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
 
       <Input
         label="Marka"
-        placeholder="np. Nike"
+        placeholder=""
         error={errors.brand?.message}
         {...register('brand')}
       />

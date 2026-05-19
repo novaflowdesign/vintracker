@@ -88,14 +88,20 @@ export async function createItem(input: NewItemInput): Promise<Item> {
   return data as Item
 }
 
+export type BundleChildInput = {
+  title: string
+  category?: string | null
+  purchase_price: number
+}
+
 export async function createBundle(
   input: NewItemInput,
-  bundleSize: number,
+  childInputs: BundleChildInput[],
 ): Promise<{ parent: Item; children: Item[] }> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Musisz być zalogowany')
 
-  const unitPrice = Number(input.purchase_price) / bundleSize
+  const bundleSize = childInputs.length
 
   const { data: parentData, error: parentErr } = await supabase
     .from('items')
@@ -105,13 +111,13 @@ export async function createBundle(
   if (parentErr) throw new Error(`Błąd tworzenia zestawu: ${parentErr.message}`)
   const parent = parentData as Item
 
-  const childRows = Array.from({ length: bundleSize }, (_, i) => ({
+  const childRows = childInputs.map(child => ({
     user_id:        user.id,
-    title:          `${input.title} #${i + 1}`,
-    purchase_price: unitPrice,
+    title:          child.title,
+    purchase_price: child.purchase_price,
     purchase_date:  input.purchase_date,
     received_date:  input.received_date ?? null,
-    category:       input.category ?? null,
+    category:       child.category ?? null,
     status:         'IN_STOCK',
     bundle_id:      parent.id,
     shipping_cost_paid_by_seller: 0,

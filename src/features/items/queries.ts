@@ -76,8 +76,8 @@ export function useCreateItem() {
 export function useCreateBundle() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ input, bundleSize }: { input: api.NewItemInput; bundleSize: number }) =>
-      api.createBundle(input, bundleSize),
+    mutationFn: ({ input, childInputs }: { input: api.NewItemInput; childInputs: api.BundleChildInput[] }) =>
+      api.createBundle(input, childInputs),
     onSuccess: () => invalidateItems(qc),
   })
 }
