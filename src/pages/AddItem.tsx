@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ImagePlus, X, Package } from 'lucide-react'
+import { ImagePlus, X, Package, Sparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from '../components/Button'
 import Input from '../components/Input'
@@ -11,6 +11,7 @@ import ItemFormFields from '../features/items/ItemFormFields'
 import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
 import { formatCurrency } from '../utils/format'
+import { analyzeCardPhoto, getGeminiKey } from '../lib/gemini'
 
 export default function AddItem() {
   const navigate = useNavigate()
@@ -22,6 +23,7 @@ export default function AddItem() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
   const [isBundle, setIsBundle] = useState(() => searchParams.get('bundle') === '1')
   const [bundleSizeInput, setBundleSizeInput] = useState('2')
   const bundleSize = Math.max(2, parseInt(bundleSizeInput) || 2)
@@ -49,7 +51,23 @@ export default function AddItem() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
-  const watchedPrice = form.watch('purchase_price')
+  const watchedPrice    = form.watch('purchase_price')
+  const watchedCategory = form.watch('category')
+  const canAnalyze = !!photoFile && !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
+
+  async function analyzePhoto() {
+    if (!photoFile) return
+    setAnalyzing(true)
+    try {
+      const { title } = await analyzeCardPhoto(photoFile)
+      form.setValue('title', title, { shouldValidate: true })
+      toast.success('Tytuł uzupełniony')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Błąd analizy')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
   const totalPrice = Number(watchedPrice) || 0
   const unitPrice = isBundle && bundleSize >= 2 ? totalPrice / bundleSize : null
 
@@ -125,15 +143,30 @@ export default function AddItem() {
           <div>
             <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
             {photoPreview ? (
-              <div className="relative w-40 h-40 rounded-xl overflow-hidden">
-                <img src={photoPreview} alt="" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
-                >
-                  <X size={14} />
-                </button>
+              <div className="flex items-end gap-3">
+                <div className="relative w-40 h-40 rounded-xl overflow-hidden shrink-0">
+                  <img src={photoPreview} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {canAnalyze && (
+                  <button
+                    type="button"
+                    onClick={analyzePhoto}
+                    disabled={analyzing}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  >
+                    {analyzing
+                      ? <><Loader2 size={14} className="animate-spin" /> Analizuję…</>
+                      : <><Sparkles size={14} /> Analizuj</>
+                    }
+                  </button>
+                )}
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">

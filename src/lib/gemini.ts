@@ -186,6 +186,65 @@ ${POKEMON_HASHTAGS}`
   return { title, description }
 }
 
+// ── Card photo analysis ───────────────────────────────────────────────────────
+
+export async function analyzeCardPhoto(image: File | string): Promise<{ title: string }> {
+  const apiKey = getGeminiKey()
+  if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
+
+  let base64: string
+  let mimeType: string
+
+  if (image instanceof File) {
+    base64   = await blobToBase64(image)
+    mimeType = image.type || 'image/jpeg'
+  } else {
+    const res = await fetch(image)
+    if (!res.ok) throw new Error('Nie można pobrać zdjęcia')
+    const blob = await res.blob()
+    base64   = await blobToBase64(blob)
+    mimeType = blob.type || 'image/jpeg'
+  }
+
+  const prompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
+1. Card name — printed in the top-left area (e.g. "Pikachu ex", "Charizard VMAX")
+2. Set code — 2–4 uppercase letters in the bottom-left corner (e.g. "SVI", "MEG")
+3. Card number — bottom-left corner, format NNN/NNN (e.g. "025/198")
+
+Reply with ONLY valid JSON, no extra text:
+{"cardName":"...","setCode":"...","cardNumber":"..."}`
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [{ role: 'user', content: [
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+        { type: 'text', text: prompt },
+      ]}],
+      temperature: 0,
+      max_tokens: 128,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    const msg = (err as { error?: { message?: string } })?.error?.message
+    if (res.status === 401) throw new Error(`Nieprawidłowy klucz API (401): ${msg ?? ''}`)
+    throw new Error(msg ?? `Błąd API (${res.status})`)
+  }
+
+  const data  = await res.json()
+  const text  = (data.choices?.[0]?.message?.content ?? '') as string
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  const parsed = JSON.parse(clean) as { cardName?: string | null; setCode?: string | null; cardNumber?: string | null }
+
+  const parts = [parsed.cardName, parsed.setCode, parsed.cardNumber].filter(Boolean)
+  if (!parts.length) throw new Error('Nie udało się odczytać danych z karty')
+  return { title: parts.join(' ') }
+}
+
 // ── Groq API call ─────────────────────────────────────────────────────────────
 
 async function blobToBase64(blob: Blob): Promise<string> {

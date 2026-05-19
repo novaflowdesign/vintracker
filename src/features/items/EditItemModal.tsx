@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ImagePlus, X } from 'lucide-react'
+import { ImagePlus, X, Sparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from '../../components/Modal'
 import Button from '../../components/Button'
@@ -9,6 +9,8 @@ import ItemFormFields from './ItemFormFields'
 import { itemSchema, type ItemFormData } from './itemSchema'
 import { useUpdateItem, useBundleChildren, usePhotoUrl } from './queries'
 import { uploadPhoto } from './api'
+import { analyzeCardPhoto, getGeminiKey } from '../../lib/gemini'
+import { supabase } from '../../lib/supabase'
 import type { Item } from '../../types/item'
 
 // ── small component to display an existing child photo ────────────────────────
@@ -47,6 +49,31 @@ export default function EditItemModal({ item, open, onClose }: Props) {
   const [childEdits, setChildEdits] = useState<Record<string, ChildEdit>>({})
   const childFileRef = useRef<HTMLInputElement>(null)
   const [targetChildId, setTargetChildId] = useState<string | null>(null)
+  const [analyzingChildId, setAnalyzingChildId] = useState<string | null>(null)
+
+  const ANALYZABLE_CATEGORIES = ['Karty Pokemon', 'Slab Pokemon']
+  const canAnalyzeChildren = isBundle && !!getGeminiKey() && ANALYZABLE_CATEGORIES.includes(item?.category ?? '')
+
+  async function analyzeChild(childId: string, photoFile: File | null, photoPath: string | null) {
+    const source = photoFile ?? photoPath
+    if (!source) { toast.error('Brak zdjęcia do analizy'); return }
+    setAnalyzingChildId(childId)
+    try {
+      let image: File | string = source instanceof File ? source : ''
+      if (typeof source === 'string') {
+        const { data } = await supabase.storage.from('item-photos').createSignedUrl(source, 60)
+        if (!data?.signedUrl) throw new Error('Nie można pobrać zdjęcia')
+        image = data.signedUrl
+      }
+      const { title } = await analyzeCardPhoto(image)
+      setChildEdits(prev => ({ ...prev, [childId]: { ...prev[childId], title } }))
+      toast.success('Tytuł uzupełniony')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Błąd analizy')
+    } finally {
+      setAnalyzingChildId(null)
+    }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({
@@ -281,6 +308,20 @@ export default function EditItemModal({ item, open, onClose }: Props) {
                       placeholder={`Przedmiot ${i + 1}`}
                       className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                     />
+                    {canAnalyzeChildren && (
+                      <button
+                        type="button"
+                        disabled={analyzingChildId === child.id}
+                        onClick={() => analyzeChild(child.id, edit.photoFile, edit.photoFile ? null : (child.photo_path ?? item?.photo_path ?? null))}
+                        className="shrink-0 p-2 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-40 transition-colors"
+                        title="Analizuj zdjęcie"
+                      >
+                        {analyzingChildId === child.id
+                          ? <Loader2 size={14} className="animate-spin" />
+                          : <Sparkles size={14} />
+                        }
+                      </button>
+                    )}
                   </div>
                 )
               })}
