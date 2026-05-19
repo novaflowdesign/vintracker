@@ -92,9 +92,12 @@ function PhotoThumbnail({ path, className = '' }: { path: string | null; classNa
 
 export function CardSkeleton() {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden animate-pulse">
-      <div className="w-2/5 min-h-[180px] bg-gray-200 dark:bg-slate-700 shrink-0" />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden animate-pulse flex sm:flex-col">
+      <div className="w-2/5 shrink-0 min-h-[180px] sm:w-full sm:min-h-0 sm:aspect-[4/3] bg-gray-200 dark:bg-slate-700" />
       <div className="flex-1 p-4 flex flex-col gap-2">
+        <div className="flex gap-1">
+          <div className="h-5 bg-gray-200 dark:bg-slate-700 rounded-lg w-20" />
+        </div>
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
         <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
         <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3 mt-2" />
@@ -295,7 +298,8 @@ function BundleCard({
     <>
       <div
         className={clsx(
-          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden relative transition-all',
+          'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden relative transition-all',
+          'flex sm:flex-col',
           selectable && 'cursor-pointer',
           selectable && selected && 'ring-2 ring-emerald-500',
         )}
@@ -361,22 +365,22 @@ function BundleCard({
           </div>
         )}
 
-        {/* Photo — left 40%, full height */}
-        <div className="relative w-2/5 shrink-0">
-          <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px]" />
+        {/* Photo */}
+        <div className="relative w-2/5 shrink-0 sm:w-full">
+          <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px] sm:min-h-0 sm:aspect-[4/3]" />
           {selectable && <SelectOverlay selected={!!selected} />}
         </div>
 
-        {/* Info + buttons — right side */}
+        {/* Info + buttons */}
         <div className="flex-1 flex flex-col p-4 min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2 mb-1">
-              <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
-              <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5">
                 Zestaw
               </span>
               <StatusBadge item={item} />
             </div>
+            <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
 
             {item.category && (
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.category}</p>
@@ -461,25 +465,27 @@ function RegularCard({
   return (
     <div
       className={clsx(
-        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex overflow-hidden transition-all',
+        'bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden transition-all',
+        'flex sm:flex-col',
         selectable && 'cursor-pointer',
         selectable && selected && 'ring-2 ring-emerald-500',
       )}
       onClick={selectable ? onToggleSelect : undefined}
     >
-      {/* Photo — left 40%, full height */}
-      <div className="relative w-2/5 shrink-0">
-        <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px]" />
+      {/* Photo */}
+      <div className="relative w-2/5 shrink-0 sm:w-full">
+        <PhotoThumbnail path={item.photo_path} className="w-full h-full min-h-[180px] sm:min-h-0 sm:aspect-[4/3]" />
         {selectable && <SelectOverlay selected={!!selected} />}
       </div>
 
-      {/* Info + buttons — right side */}
+      {/* Info + buttons */}
       <div className="flex-1 flex flex-col p-4 min-w-0">
         <div className="flex-1 min-w-0">
-          <div className="flex items-start gap-2 mb-1">
-            <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
+          <div className="flex flex-wrap gap-1 mb-1.5">
             <StatusBadge item={item} />
           </div>
+
+          <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
 
           {(item.brand || item.size) && (
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
