@@ -49,9 +49,16 @@ function GenerationModal({
     }
   }, [item.id])
 
+  const { data: parentItems = [] } = useItems({})
+
   const hasKey = !!getGeminiKey()
   const isShoe = item.category === 'Buty piłkarskie'
-  const defaultTemplateId = templates.find(t => t.name === item.category)?.id ?? templates[0]?.id ?? ''
+
+  // children have no category — fall back to parent bundle's category via bundle_id
+  const effectiveCategory = item.category
+    ?? (item.bundle_id ? parentItems.find(p => p.id === item.bundle_id)?.category : null)
+
+  const defaultTemplateId = templates.find(t => t.name === effectiveCategory)?.id ?? templates[0]?.id ?? ''
   const activeTemplateId  = selectedId || defaultTemplateId
   const selectedTemplate  = templates.find(t => t.id === activeTemplateId)
 
