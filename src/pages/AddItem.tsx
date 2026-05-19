@@ -57,12 +57,14 @@ export default function AddItem() {
     setSubmitting(true)
     try {
       const meta: Record<string, string> = {}
-      if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
-      if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
-      if (data.meta_box_type)   meta.box_type   = data.meta_box_type
+      if (data.meta_shoe_level)   meta.shoe_level   = data.meta_shoe_level
+      if (data.meta_shoe_type)    meta.shoe_type     = data.meta_shoe_type
+      if (data.meta_box_type)     meta.box_type      = data.meta_box_type
+      if (data.meta_slab_company) meta.slab_company  = data.meta_slab_company
+      if (data.meta_slab_grade)   meta.slab_grade    = data.meta_slab_grade
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, meta_box_type, ...formData } = data
+      const { meta_shoe_level, meta_shoe_type, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
       const input = {
         ...formData,
         purchase_price:  Number(data.purchase_price),

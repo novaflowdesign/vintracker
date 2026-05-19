@@ -43,6 +43,7 @@ export function saveGeneratedDesc(itemId: string, desc: GeneratedDesc) {
 export function getAllGeneratedDescs(): Record<string, GeneratedDesc> {
   return readAll()
 }
+import { parsePokemonTitle } from './pokemonSets'
 
 // ── Direct description generators (no AI) ────────────────────────────────────
 
@@ -129,6 +130,41 @@ function generatePokemonBoxDescriptionDirect(meta: {
   return { title, description }
 }
 
+function generateSlabDescriptionDirect(meta: {
+  title?: string
+  metadata?: Record<string, string> | null
+}): { title: string; description: string } {
+  const rawTitle  = meta.title ?? '[Tytuł z magazynu]'
+  const company   = meta.metadata?.slab_company ?? 'PSA'
+  const grade     = meta.metadata?.slab_grade   ?? '?'
+
+  const parsed      = parsePokemonTitle(rawTitle)
+  const pokemonName = parsed.pokemonName || rawTitle
+  const cardNumber  = parsed.cardNumber ?? ''
+  const setCode     = parsed.setCode    ?? ''
+  const setName     = parsed.setName    ?? setCode
+
+  const gradeLabel  = `${company} ${grade}`
+  const title       = `${gradeLabel} ${rawTitle}`
+
+  const setLine     = setCode
+    ? `📦 Seria: ${setName !== setCode ? `${setName} (${setCode})` : setCode}\n`
+    : ''
+  const numberLine  = cardNumber ? `📋 Numer: ${cardNumber}\n` : ''
+
+  const description = `${gradeLabel} ${rawTitle}
+
+🏆 Nota: ${gradeLabel}
+🃏 Karta: ${pokemonName}
+${numberLine}${setLine}
+✅ Oryginalny slab ${company}
+🚚 Wysyłka: InPost – dobrze zabezpieczona
+
+#pokemon #pokemontcg #${company.toLowerCase()} #${company.toLowerCase()}graded #slab #gradedcard #pokemonslab #pokemontcgpolska`
+
+  return { title, description }
+}
+
 // ── Groq API call ─────────────────────────────────────────────────────────────
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -155,6 +191,7 @@ export async function generateDescription(
   if (itemMeta?.category === 'Buty piłkarskie')  return generateShoeDescriptionDirect(itemMeta)
   if (itemMeta?.category === 'Karty Pokemon')    return generatePokemonCardDescriptionDirect(itemMeta)
   if (itemMeta?.category === 'Boxy Pokemon')     return generatePokemonBoxDescriptionDirect(itemMeta)
+  if (itemMeta?.category === 'Slab Pokemon')     return generateSlabDescriptionDirect(itemMeta)
 
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')

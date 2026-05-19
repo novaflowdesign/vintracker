@@ -57,7 +57,7 @@ function GenerationModal({
   const effectiveCategory = item.category
     ?? (item.bundle_id ? parentItems.find(p => p.id === item.bundle_id)?.category : null)
 
-  const DIRECT_CATEGORIES = ['Buty piłkarskie', 'Karty Pokemon', 'Boxy Pokemon']
+  const DIRECT_CATEGORIES = ['Buty piłkarskie', 'Karty Pokemon', 'Boxy Pokemon', 'Slab Pokemon']
   const isDirectGen = DIRECT_CATEGORIES.includes(effectiveCategory ?? '')
 
   const defaultTemplateId = templates.find(t => t.name === effectiveCategory)?.id ?? templates[0]?.id ?? ''

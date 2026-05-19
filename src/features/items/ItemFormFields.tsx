@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import Input from '../../components/Input'
 import Select from '../../components/Select'
@@ -26,6 +27,12 @@ const BOX_TYPE_OPTIONS = [
   { value: 'puszka_mini_tin', label: 'Puszka Mini Tin' },
   { value: 'pokeball_tin',    label: 'Pokeball Tin' },
 ]
+const SLAB_COMPANY_OPTIONS = [
+  { value: 'PSA', label: 'PSA' },
+  { value: 'CGC', label: 'CGC' },
+  { value: 'ACE', label: 'ACE' },
+  { value: 'TAG', label: 'TAG' },
+]
 
 interface Props {
   form: UseFormReturn<ItemFormData>
@@ -36,6 +43,7 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = form
 
@@ -43,6 +51,22 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
   const showSize  = category === 'Buty piłkarskie'
   const isShoes   = category === 'Buty piłkarskie'
   const isPokebox = category === 'Boxy Pokemon'
+  const isSlab    = category === 'Slab Pokemon'
+
+  const gradeRaw = watch('meta_slab_grade')
+  const grade    = gradeRaw !== undefined && gradeRaw !== '' ? parseFloat(gradeRaw) : 10
+
+  useEffect(() => {
+    if (isSlab && (gradeRaw === undefined || gradeRaw === '')) {
+      setValue('meta_slab_grade', '10')
+    }
+  }, [isSlab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function stepGrade(delta: number) {
+    const next = Math.round((grade + delta) * 2) / 2
+    if (next < 0 || next > 10) return
+    setValue('meta_slab_grade', next.toString(), { shouldValidate: true })
+  }
 
   return (
     <div className="space-y-4">
@@ -146,6 +170,45 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
             error={errors.meta_box_type?.message}
             {...register('meta_box_type')}
           />
+        </div>
+      )}
+
+      {/* Slab Pokemon — firma + ocena */}
+      {isSlab && (
+        <div className="space-y-3 p-3 bg-purple-50 dark:bg-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800">
+          <p className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide">Slab Pokemon</p>
+          <Select
+            label="Firma gradingowa"
+            placeholder="— wybierz —"
+            options={SLAB_COMPANY_OPTIONS}
+            error={errors.meta_slab_company?.message}
+            {...register('meta_slab_company')}
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Ocena</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => stepGrade(-0.5)}
+                disabled={grade <= 0}
+                className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                −
+              </button>
+              <span className="w-12 text-center text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                {grade % 1 === 0 ? grade.toFixed(0) : grade.toFixed(1)}
+              </span>
+              <button
+                type="button"
+                onClick={() => stepGrade(+0.5)}
+                disabled={grade >= 10}
+                className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                +
+              </button>
+            </div>
+            <input type="hidden" {...register('meta_slab_grade')} />
+          </div>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ export const CATEGORIES = [
   'Buty piłkarskie',
   'Karty Pokemon',
   'Boxy Pokemon',
+  'Slab Pokemon',
 ] as const
 
 export const CONDITIONS: { value: string; label: string }[] = [
