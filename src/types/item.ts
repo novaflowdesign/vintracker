@@ -44,6 +44,7 @@ export interface Item {
   notes: string | null
   bundle_id: string | null
   bundle_size: number | null
+  metadata: Record<string, string> | null
   created_at: string
   updated_at: string
 }

@@ -57,6 +57,13 @@ export async function generateDescription(
   imageUrl: string,
   titleTemplate: string,
   descTemplate: string,
+  itemMeta?: {
+    title?: string
+    category?: string | null
+    metadata?: Record<string, string> | null
+    size?: string | null
+    brand?: string | null
+  },
 ): Promise<{ title: string; description: string }> {
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
@@ -67,9 +74,23 @@ export async function generateDescription(
   const base64  = await blobToBase64(blob)
   const mimeType = blob.type || 'image/jpeg'
 
-  const prompt = `Jesteś asystentem tworzącym opisy ogłoszeń sprzedażowych na podstawie zdjęć produktów.
+  const knownFacts: string[] = []
+  if (itemMeta?.title)                          knownFacts.push(`Tytuł przedmiotu: ${itemMeta.title}`)
+  if (itemMeta?.brand)                          knownFacts.push(`Marka: ${itemMeta.brand}`)
+  if (itemMeta?.size)                           knownFacts.push(`Rozmiar: ${itemMeta.size}`)
+  if (itemMeta?.metadata?.card_number)          knownFacts.push(`Numer karty: ${itemMeta.metadata.card_number}`)
+  if (itemMeta?.metadata?.set_code)             knownFacts.push(`Skrót serii: ${itemMeta.metadata.set_code}`)
+  if (itemMeta?.metadata?.set_name)             knownFacts.push(`Pełna nazwa serii: ${itemMeta.metadata.set_name}`)
+  if (itemMeta?.metadata?.shoe_level)           knownFacts.push(`Poziom: ${itemMeta.metadata.shoe_level}`)
+  if (itemMeta?.metadata?.shoe_type)            knownFacts.push(`Typ obuwia: ${itemMeta.metadata.shoe_type}`)
 
-Przeanalizuj dokładnie zdjęcie i wypełnij poniższy szablon. Dla każdej zmiennej w nawiasach kwadratowych [ZMIENNA] wstaw wartość odczytaną ze zdjęcia. Jeśli nie możesz odczytać wartości — zostaw oryginalny tekst zmiennej bez zmian.
+  const factsSection = knownFacts.length
+    ? `\nZNANE DANE O PRZEDMIOCIE (użyj ich priorytetowo, nie odczytuj ich ze zdjęcia):\n${knownFacts.map(f => `- ${f}`).join('\n')}\n`
+    : ''
+
+  const prompt = `Jesteś asystentem tworzącym opisy ogłoszeń sprzedażowych na podstawie zdjęć produktów.
+${factsSection}
+Przeanalizuj zdjęcie i wypełnij poniższy szablon. Dla każdej zmiennej w nawiasach kwadratowych [ZMIENNA] wstaw wartość — najpierw z powyższych znanych danych, a jeśli tam jej nie ma to odczytaj ze zdjęcia. Jeśli nie możesz odczytać wartości — zostaw oryginalny tekst zmiennej bez zmian.
 
 SZABLON TYTUŁU:
 ${titleTemplate}

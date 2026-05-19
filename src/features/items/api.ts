@@ -14,6 +14,7 @@ export type NewItemInput = {
   received_date?: string | null
   purchase_source?: string | null
   notes?: string | null
+  metadata?: Record<string, string> | null
 }
 
 export type SortOrder = 'newest' | 'oldest' | 'price_desc'

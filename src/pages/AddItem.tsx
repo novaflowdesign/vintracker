@@ -11,6 +11,7 @@ import ItemFormFields from '../features/items/ItemFormFields'
 import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
 import { formatCurrency } from '../utils/format'
+import { setNameFromCode } from '../lib/pokemonSets'
 
 export default function AddItem() {
   const navigate = useNavigate()
@@ -56,6 +57,17 @@ export default function AddItem() {
   async function onSubmit(data: ItemFormData) {
     setSubmitting(true)
     try {
+      const meta: Record<string, string> = {}
+      if (data.meta_card_number?.trim()) meta.card_number = data.meta_card_number.trim()
+      if (data.meta_set_code?.trim()) {
+        const code = data.meta_set_code.trim().toUpperCase()
+        meta.set_code = code
+        const name = setNameFromCode(code)
+        if (name) meta.set_name = name
+      }
+      if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
+      if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
+
       const input = {
         ...data,
         purchase_price:  Number(data.purchase_price),
@@ -64,8 +76,10 @@ export default function AddItem() {
         brand:           data.brand           || null,
         size:            data.size            || null,
         condition:       data.condition       || null,
+        received_date:   data.received_date   || null,
         purchase_source: data.purchase_source || null,
         notes:           data.notes           || null,
+        metadata:        Object.keys(meta).length ? meta : null,
       }
 
       if (isBundle) {

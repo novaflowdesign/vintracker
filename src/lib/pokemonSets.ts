@@ -1,0 +1,71 @@
+export const POKEMON_SETS: Record<string, string> = {
+  // Scarlet & Violet era
+  PRE: 'Prismatic Evolutions',
+  SSP: 'Surging Sparks',
+  SCR: 'Stellar Crown',
+  SFA: 'Shrouded Fable',
+  TWM: 'Twilight Masquerade',
+  TEF: 'Temporal Forces',
+  PAF: 'Paldean Fates',
+  PAR: 'Paradox Rift',
+  OBF: 'Obsidian Flames',
+  MEW: 'Pokémon 151',
+  PAL: 'Paldea Evolved',
+  SVI: 'Scarlet & Violet',
+  JTG: 'Journey Together',
+
+  // Sword & Shield era
+  CRZ: 'Crown Zenith',
+  SIT: 'Silver Tempest',
+  LOR: 'Lost Origin',
+  PGO: 'Pokémon GO',
+  ASR: 'Astral Radiance',
+  BRS: 'Brilliant Stars',
+  FST: 'Fusion Strike',
+  EVS: 'Evolving Skies',
+  CRE: 'Chilling Reign',
+  BST: 'Battle Styles',
+  VIV: 'Vivid Voltage',
+  CPA: "Champion's Path",
+  SHF: 'Shining Fates',
+  DAA: 'Darkness Ablaze',
+  RCL: 'Rebel Clash',
+  SSH: 'Sword & Shield',
+
+  // Sun & Moon era
+  HIF: 'Hidden Fates',
+  UNM: 'Unified Minds',
+  UNB: 'Unbroken Bonds',
+  DET: 'Detective Pikachu',
+  TEU: 'Team Up',
+  DRM: 'Dragon Majesty',
+  LOT: 'Lost Thunder',
+  CES: 'Celestial Storm',
+  FLI: 'Forbidden Light',
+  UPR: 'Ultra Prism',
+  CIN: 'Crimson Invasion',
+  BUS: 'Burning Shadows',
+  GUR: 'Guardians Rising',
+  SUM: 'Sun & Moon',
+  SLG: 'Shining Legends',
+
+  // XY era
+  EVO: 'Evolutions',
+  STS: 'Steam Siege',
+  FCO: 'Fates Collide',
+  BKP: 'BREAKpoint',
+  BKT: 'BREAKthrough',
+  AOR: 'Ancient Origins',
+  ROS: 'Roaring Skies',
+  DCR: 'Double Crisis',
+  PRC: 'Primal Clash',
+  PHF: 'Phantom Forces',
+  FUF: 'Furious Fists',
+  FFI: 'Furious Fists',
+  FLF: 'Flash Fire',
+  XY: 'XY Base Set',
+}
+
+export function setNameFromCode(code: string): string {
+  return POKEMON_SETS[code.toUpperCase().trim()] ?? ''
+}

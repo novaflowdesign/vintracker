@@ -8,6 +8,7 @@ import Button from '../../components/Button'
 import ItemFormFields from './ItemFormFields'
 import { itemSchema, type ItemFormData } from './itemSchema'
 import { useUpdateItem, useBundleChildren, usePhotoUrl } from './queries'
+import { setNameFromCode } from '../../lib/pokemonSets'
 import { uploadPhoto } from './api'
 import type { Item } from '../../types/item'
 
@@ -65,8 +66,12 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         condition:       item.condition ?? '',
         purchase_price:  Number(item.purchase_price),
         purchase_date:   item.purchase_date,
-        received_date:   item.received_date ?? '',
-        purchase_source: item.purchase_source ?? '',
+        received_date:    item.received_date ?? '',
+        purchase_source:  item.purchase_source ?? '',
+        meta_card_number: item.metadata?.card_number ?? '',
+        meta_set_code:    item.metadata?.set_code ?? '',
+        meta_shoe_level:  item.metadata?.shoe_level ?? '',
+        meta_shoe_type:   item.metadata?.shoe_type ?? '',
         notes:           item.notes ?? '',
       })
       setPhotoFile(null)
@@ -125,6 +130,20 @@ export default function EditItemModal({ item, open, onClose }: Props) {
 
   // ── submit ────────────────────────────────────────────────────────────────
 
+  function buildMetadata(data: ItemFormData): Record<string, string> | null {
+    const meta: Record<string, string> = {}
+    if (data.meta_card_number?.trim()) meta.card_number = data.meta_card_number.trim()
+    if (data.meta_set_code?.trim()) {
+      const code = data.meta_set_code.trim().toUpperCase()
+      meta.set_code = code
+      const name = setNameFromCode(code)
+      if (name) meta.set_name = name
+    }
+    if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
+    if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
+    return Object.keys(meta).length ? meta : null
+  }
+
   async function onSubmit(data: ItemFormData) {
     if (!item) return
     setUploading(true)
@@ -149,6 +168,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
           purchase_source: (data.purchase_source || null) as Item['purchase_source'],
           received_date:   data.received_date   || null,
           notes:           data.notes           || null,
+          metadata:        buildMetadata(data),
         },
       })
 

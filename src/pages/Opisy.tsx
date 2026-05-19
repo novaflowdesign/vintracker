@@ -63,7 +63,18 @@ function GenerationModal({
     setGenerating(true)
     setResult(null)
     try {
-      const res = await generateDescription(photoUrl, selectedTemplate.titleTemplate, selectedTemplate.descTemplate)
+      const res = await generateDescription(
+        photoUrl,
+        selectedTemplate.titleTemplate,
+        selectedTemplate.descTemplate,
+        {
+          title:    item.title,
+          category: item.category,
+          metadata: item.metadata,
+          size:     item.size,
+          brand:    item.brand,
+        },
+      )
       setResult(res)
       setEditTitle(res.title)
       setEditDesc(res.description)
