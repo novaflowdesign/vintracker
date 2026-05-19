@@ -113,14 +113,14 @@ function GeneratorCard() {
   return (
     <Card title="Generator opisów">
       {/* API key */}
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Klucz Gemini API</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Klucz Groq API</p>
       <div className="flex gap-2 mb-5">
         <div className="flex-1 relative">
           <input
             type={showKey ? 'text' : 'password'}
             value={keyInput}
             onChange={e => setKeyInput(e.target.value)}
-            placeholder="AIzaSy..."
+            placeholder="gsk_..."
             className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-9"
           />
           <button

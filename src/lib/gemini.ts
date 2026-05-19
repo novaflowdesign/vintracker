@@ -1,4 +1,4 @@
-const KEY_STORAGE  = 'vt_gemini_key'
+const KEY_STORAGE  = 'vt_groq_key'
 const DESCS_STORAGE = 'vt_generated_descs'
 
 // ── API key ───────────────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export async function generateDescription(
   descTemplate: string,
 ): Promise<{ title: string; description: string }> {
   const apiKey = getGeminiKey()
-  if (!apiKey) throw new Error('Brak klucza Gemini API — skonfiguruj go w Ustawieniach.')
+  if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
 
   const imgRes = await fetch(imageUrl)
   if (!imgRes.ok) throw new Error('Nie można pobrać zdjęcia')
@@ -81,16 +81,24 @@ Odpowiedz wyłącznie poprawnym JSON bez żadnego dodatkowego tekstu:
 {"title":"...","description":"..."}`
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`,
+    'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [
-          { inlineData: { mimeType, data: base64 } },
-          { text: prompt },
-        ]}],
-        generationConfig: { temperature: 0.1 },
+        model: 'llama-3.2-11b-vision-preview',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+            { type: 'text', text: prompt },
+          ],
+        }],
+        temperature: 0.1,
+        max_tokens: 1024,
       }),
     },
   )
@@ -98,13 +106,14 @@ Odpowiedz wyłącznie poprawnym JSON bez żadnego dodatkowego tekstu:
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     const msg  = (err as { error?: { message?: string } })?.error?.message
-    if (res.status === 400) throw new Error('Nieprawidłowe żądanie — sprawdź klucz API')
-    if (res.status === 403) throw new Error('Brak dostępu — sprawdź klucz API')
+    if (res.status === 401) throw new Error(`Nieprawidłowy klucz API (401): ${msg ?? ''}`)
+    if (res.status === 400) throw new Error(`Nieprawidłowe żądanie (400): ${msg ?? ''}`)
+    if (res.status === 429) throw new Error('Przekroczono limit zapytań — spróbuj za chwilę')
     throw new Error(msg ?? `Błąd API (${res.status})`)
   }
 
   const data = await res.json()
-  const text = (data.candidates?.[0]?.content?.parts?.[0]?.text ?? '') as string
+  const text = (data.choices?.[0]?.message?.content ?? '') as string
   const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
 
   try {

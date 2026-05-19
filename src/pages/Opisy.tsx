@@ -118,7 +118,7 @@ function GenerationModal({
           {!hasKey && (
             <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 mb-4">
               <AlertCircle size={15} className="text-amber-600 shrink-0" />
-              <p className="text-sm text-amber-700 dark:text-amber-400">Brak klucza Gemini API — skonfiguruj go w Ustawieniach.</p>
+              <p className="text-sm text-amber-700 dark:text-amber-400">Brak klucza Groq API — skonfiguruj go w Ustawieniach.</p>
             </div>
           )}
           {hasKey && templates.length === 0 && (
