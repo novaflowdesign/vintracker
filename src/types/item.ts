@@ -34,6 +34,7 @@ export interface Item {
   photo_path: string | null
   purchase_price: number
   purchase_date: string
+  received_date: string | null
   purchase_source: PurchaseSource | null
   status: ItemStatus
   sale_price: number | null

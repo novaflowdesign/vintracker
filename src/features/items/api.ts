@@ -11,6 +11,7 @@ export type NewItemInput = {
   condition?: string | null
   purchase_price: number
   purchase_date: string
+  received_date?: string | null
   purchase_source?: string | null
   notes?: string | null
 }
@@ -104,10 +105,11 @@ export async function createBundle(
   const parent = parentData as Item
 
   const childRows = Array.from({ length: bundleSize }, (_, i) => ({
-    user_id:      user.id,
-    title:        `${input.title} #${i + 1}`,
+    user_id:        user.id,
+    title:          `${input.title} #${i + 1}`,
     purchase_price: unitPrice,
     purchase_date:  input.purchase_date,
+    received_date:  input.received_date ?? null,
     category:       input.category ?? null,
     status:         'IN_STOCK',
     bundle_id:      parent.id,

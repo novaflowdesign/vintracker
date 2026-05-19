@@ -82,6 +82,14 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
           {...register('purchase_date')}
         />
       </div>
+
+      <Input
+        label="Data przyjęcia na magazyn"
+        type="date"
+        hint="Zostaw puste jeśli już masz. Ustaw przyszłą datę → 'W dostawie'."
+        error={errors.received_date?.message}
+        {...register('received_date')}
+      />
     </div>
   )
 }

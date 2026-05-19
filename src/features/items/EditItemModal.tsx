@@ -65,6 +65,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         condition:       item.condition ?? '',
         purchase_price:  Number(item.purchase_price),
         purchase_date:   item.purchase_date,
+        received_date:   item.received_date ?? '',
         purchase_source: item.purchase_source ?? '',
         notes:           item.notes ?? '',
       })
@@ -145,7 +146,8 @@ export default function EditItemModal({ item, open, onClose }: Props) {
           brand:           data.brand           || null,
           size:            data.size            || null,
           condition:       (data.condition      || null) as Item['condition'],
-          purchase_source: (data.purchase_source|| null) as Item['purchase_source'],
+          purchase_source: (data.purchase_source || null) as Item['purchase_source'],
+          received_date:   data.received_date   || null,
           notes:           data.notes           || null,
         },
       })

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Package, Pencil, Trash2, X, Search, Check } from 'lucide-react'
+import { Package, Pencil, Trash2, X, Search, Check, Truck, Warehouse } from 'lucide-react'
 import clsx from 'clsx'
 import Button from '../../components/Button'
 import SellModal from './SellModal'
@@ -8,6 +8,35 @@ import GroupSellModal from './GroupSellModal'
 import { usePhotoUrl, useBundleChildren } from './queries'
 import { formatCurrency, formatDate, daysSince } from '../../utils/format'
 import type { Item } from '../../types/item'
+
+// ── delivery status helpers ───────────────────────────────────────────────────
+
+function inDelivery(item: Item): boolean {
+  if (!item.received_date) return false
+  return new Date(item.received_date) > new Date()
+}
+
+function effectiveDays(item: Item): number {
+  const start = item.received_date && !inDelivery(item)
+    ? item.received_date
+    : item.purchase_date
+  return daysSince(start)
+}
+
+function StatusBadge({ item }: { item: Item }) {
+  if (inDelivery(item)) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 rounded-lg px-2 py-0.5 shrink-0">
+        <Truck size={10} />W dostawie
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-lg px-2 py-0.5 shrink-0">
+      <Warehouse size={10} />W magazynie
+    </span>
+  )
+}
 
 // ── shared thumbnail ──────────────────────────────────────────────────────────
 
@@ -255,11 +284,12 @@ function BundleCard({
     setSelectedChildIds(new Set())
   }
 
-  const total     = item.bundle_size ?? children.length
-  const soldCount = children.filter(c => c.status === 'SOLD').length
-  const progress  = total > 0 ? (soldCount / total) * 100 : 0
-  const unitPrice = total > 0 ? Number(item.purchase_price) / total : Number(item.purchase_price)
-  const days      = daysSince(item.purchase_date)
+  const total      = item.bundle_size ?? children.length
+  const soldCount  = children.filter(c => c.status === 'SOLD').length
+  const progress   = total > 0 ? (soldCount / total) * 100 : 0
+  const unitPrice  = total > 0 ? Number(item.purchase_price) / total : Number(item.purchase_price)
+  const days       = effectiveDays(item)
+  const delivering = inDelivery(item)
 
   return (
     <>
@@ -340,11 +370,12 @@ function BundleCard({
         {/* Info + buttons — right side */}
         <div className="flex-1 flex flex-col p-4 min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 mb-1">
               <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
               <span className="text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 rounded-lg px-2 py-0.5 shrink-0">
                 Zestaw
               </span>
+              <StatusBadge item={item} />
             </div>
 
             {item.category && (
@@ -359,7 +390,10 @@ function BundleCard({
             </p>
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
+              {delivering
+                ? <>Zakup: {formatDate(item.purchase_date)} · dostawa: {formatDate(item.received_date!)}</>
+                : <>{formatDate(item.received_date ?? item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.</>
+              }
             </p>
 
             <div className="mt-2">
@@ -421,7 +455,8 @@ function RegularCard({
   selected?: boolean
   onToggleSelect?: () => void
 }) {
-  const days = daysSince(item.purchase_date)
+  const days = effectiveDays(item)
+  const delivering = inDelivery(item)
 
   return (
     <div
@@ -441,7 +476,10 @@ function RegularCard({
       {/* Info + buttons — right side */}
       <div className="flex-1 flex flex-col p-4 min-w-0">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 dark:text-white leading-tight">{item.title}</p>
+          <div className="flex items-start gap-2 mb-1">
+            <p className="font-semibold text-gray-900 dark:text-white leading-tight flex-1 min-w-0">{item.title}</p>
+            <StatusBadge item={item} />
+          </div>
 
           {(item.brand || item.size) && (
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -454,7 +492,10 @@ function RegularCard({
           </p>
 
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            {formatDate(item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.
+            {delivering
+              ? <>Zakup: {formatDate(item.purchase_date)} · dostawa: {formatDate(item.received_date!)}</>
+              : <>{formatDate(item.received_date ?? item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.</>
+            }
           </p>
         </div>
 

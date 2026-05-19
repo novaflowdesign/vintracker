@@ -9,6 +9,7 @@ export const itemSchema = z.object({
   condition:       z.string().optional(),
   purchase_price:  z.coerce.number().min(0, 'Cena nie może być ujemna'),
   purchase_date:   z.string().min(1, 'Data zakupu jest wymagana'),
+  received_date:   z.string().optional(),
   purchase_source: z.string().optional(),
   notes:           z.string().optional(),
 })

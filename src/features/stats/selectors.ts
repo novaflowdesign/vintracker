@@ -18,8 +18,11 @@ function profit(item: Item): number {
 }
 
 function daysOnShelf(item: Item): number {
-  const end = item.sale_date ? new Date(item.sale_date) : new Date()
-  return Math.floor((end.getTime() - new Date(item.purchase_date).getTime()) / 86_400_000)
+  const receivedDate = item.received_date ? new Date(item.received_date) : null
+  const today = new Date()
+  const start = receivedDate && receivedDate <= today ? receivedDate : new Date(item.purchase_date)
+  const end   = item.sale_date ? new Date(item.sale_date) : today
+  return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 86_400_000))
 }
 
 // ── revenue / profit / margin ────────────────────────────────────────────────

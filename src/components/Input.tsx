@@ -4,11 +4,12 @@ import clsx from 'clsx'
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
+  hint?: string
   suffix?: string
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, suffix, className, id, ...props }, ref) => {
+  ({ label, error, hint, suffix, className, id, ...props }, ref) => {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
     return (
       <div className="flex flex-col gap-1">
@@ -36,6 +37,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             </span>
           )}
         </div>
+        {hint && !error && <p className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </div>
     )
