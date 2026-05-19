@@ -22,12 +22,6 @@ function fromDB(row: DBRow): Template {
   return { id: row.id, name: row.name, titleTemplate: row.title_template, descTemplate: row.desc_template }
 }
 
-const DEFAULT_TEMPLATE = {
-  name: 'Domyślny',
-  titleTemplate: '[Tytuł z magazynu]',
-  descTemplate: '[Tytuł z magazynu]\n\n🚚 Wysyłka: InPost – dobrze zabezpieczona',
-}
-
 // ── API ───────────────────────────────────────────────────────────────────────
 
 async function fetchTemplates(): Promise<Template[]> {
@@ -36,12 +30,7 @@ async function fetchTemplates(): Promise<Template[]> {
     .select('*')
     .order('created_at', { ascending: true })
   if (error) throw error
-  const rows = (data ?? []) as DBRow[]
-  if (rows.length === 0) {
-    const created = await apiCreateTemplate(DEFAULT_TEMPLATE)
-    return [created]
-  }
-  return rows.map(fromDB)
+  return ((data ?? []) as DBRow[]).map(fromDB)
 }
 
 async function apiCreateTemplate(t: Omit<Template, 'id'>): Promise<Template> {

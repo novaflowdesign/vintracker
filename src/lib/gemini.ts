@@ -44,7 +44,7 @@ export function getAllGeneratedDescs(): Record<string, GeneratedDesc> {
   return readAll()
 }
 
-// ── Shoe description (no AI) ─────────────────────────────────────────────────
+// ── Direct description generators (no AI) ────────────────────────────────────
 
 const BOX_TYPE_LABELS: Record<string, string> = {
   etb:             'Elite Trainer Box (ETB)',
@@ -95,6 +95,40 @@ function generateShoeDescriptionDirect(meta: {
   return { title, description }
 }
 
+function generatePokemonCardDescriptionDirect(meta: {
+  title?: string
+}): { title: string; description: string } {
+  const title = meta.title ?? '[Tytuł z magazynu]'
+
+  const description = `${title}
+
+✅ Oryginalna karta Pokemon TCG
+📦 Karta w bardzo dobrym stanie
+🚚 Wysyłka: InPost – dobrze zabezpieczona
+
+#pokemon #pokemontcg #kartypokemon #tcg #pokemontcgpolska #kartypokemont`
+
+  return { title, description }
+}
+
+function generatePokemonBoxDescriptionDirect(meta: {
+  title?: string
+  metadata?: Record<string, string> | null
+}): { title: string; description: string } {
+  const title   = meta.title ?? '[Tytuł z magazynu]'
+  const boxType = BOX_TYPE_LABELS[meta.metadata?.box_type ?? ''] ?? meta.metadata?.box_type ?? '[Rodzaj boxa]'
+
+  const description = `${title}
+
+📦 Rodzaj: ${boxType}
+✅ Oryginalny produkt Pokemon TCG – fabrycznie zapakowany
+🚚 Wysyłka: InPost – dobrze zabezpieczona
+
+#pokemon #pokemontcg #pokemonbox #etb #tcg #pokemontcgpolska #boxy`
+
+  return { title, description }
+}
+
 // ── Groq API call ─────────────────────────────────────────────────────────────
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -118,10 +152,9 @@ export async function generateDescription(
     brand?: string | null
   },
 ): Promise<{ title: string; description: string }> {
-  // Shoes: instant generation from stored data, no API call
-  if (itemMeta?.category === 'Buty piłkarskie') {
-    return generateShoeDescriptionDirect(itemMeta)
-  }
+  if (itemMeta?.category === 'Buty piłkarskie')  return generateShoeDescriptionDirect(itemMeta)
+  if (itemMeta?.category === 'Karty Pokemon')    return generatePokemonCardDescriptionDirect(itemMeta)
+  if (itemMeta?.category === 'Boxy Pokemon')     return generatePokemonBoxDescriptionDirect(itemMeta)
 
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
@@ -137,22 +170,12 @@ export async function generateDescription(
   if (itemMeta?.brand)  knownFacts.push(`Marka: ${itemMeta.brand}`)
   if (itemMeta?.size)   knownFacts.push(`Rozmiar: ${itemMeta.size}`)
 
-  // Pokemon boxes: include box type from metadata
-  if (itemMeta?.category === 'Boxy Pokemon' && itemMeta.metadata?.box_type) {
-    const label = BOX_TYPE_LABELS[itemMeta.metadata.box_type] ?? itemMeta.metadata.box_type
-    knownFacts.push(`Rodzaj boxa: ${label}`)
-  }
-
   const factsSection = knownFacts.length
     ? `\nZNANE DANE O PRZEDMIOCIE (użyj ich priorytetowo, nie odczytuj ich ze zdjęcia):\n${knownFacts.map(f => `- ${f}`).join('\n')}\n`
     : ''
 
-  const pokemonCardNote = itemMeta?.category === 'Karty Pokemon'
-    ? `\nTo jest karta Pokemon TCG. Na podstawie tytułu samodzielnie zidentyfikuj: nazwę Pokemona, numer karty (format NNN/NNN) oraz pełną nazwę dodatku — rozwiązując skrót serii zawarty w tytule (np. SVI → "Scarlet & Violet", MEW → "Pokémon 151", PRE → "Prismatic Evolutions"). Użyj swojej wiedzy o zestawach Pokemon TCG — nie polegaj na zdjęciu w kwestii nazwy serii.\n`
-    : ''
-
   const prompt = `Jesteś asystentem tworzącym opisy ogłoszeń sprzedażowych na podstawie zdjęć produktów.
-${factsSection}${pokemonCardNote}
+${factsSection}
 Przeanalizuj zdjęcie i wypełnij poniższy szablon. Dla każdej zmiennej w nawiasach kwadratowych [ZMIENNA] wstaw wartość — najpierw z powyższych znanych danych, a jeśli tam jej nie ma to odczytaj ze zdjęcia. Jeśli nie możesz odczytać wartości — zostaw oryginalny tekst zmiennej bez zmian.
 
 SZABLON TYTUŁU:
