@@ -106,8 +106,8 @@ function GenerationModal({
       <div className={[
         'fixed z-50 bg-white dark:bg-slate-900 flex flex-col settings-sheet',
         'inset-x-0 bottom-0 rounded-t-3xl max-h-[92vh]',
-        'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
-        'sm:rounded-2xl sm:w-full sm:max-w-md sm:max-h-[85vh] sm:shadow-2xl',
+        'sm:inset-0 sm:m-auto sm:w-[500px] sm:h-fit sm:max-h-[88vh]',
+        'sm:rounded-2xl sm:shadow-2xl',
       ].join(' ')}>
 
         {/* Handle (mobile only) + close */}
@@ -244,8 +244,8 @@ function BundleChildrenSheet({
       <div className={[
         'fixed z-50 bg-white dark:bg-slate-900 flex flex-col settings-sheet',
         'inset-x-0 bottom-0 rounded-t-3xl max-h-[85vh]',
-        'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
-        'sm:rounded-2xl sm:w-full sm:max-w-lg sm:max-h-[80vh] sm:shadow-2xl',
+        'sm:inset-0 sm:m-auto sm:w-[560px] sm:h-fit sm:max-h-[85vh]',
+        'sm:rounded-2xl sm:shadow-2xl',
       ].join(' ')}>
         <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
