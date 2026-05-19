@@ -1,4 +1,4 @@
-import { parsePokemonTitle } from './pokemonSets'
+
 
 const KEY_STORAGE  = 'vt_groq_key'
 const DESCS_STORAGE = 'vt_generated_descs'
@@ -137,15 +137,6 @@ export async function generateDescription(
   if (itemMeta?.brand)  knownFacts.push(`Marka: ${itemMeta.brand}`)
   if (itemMeta?.size)   knownFacts.push(`Rozmiar: ${itemMeta.size}`)
 
-  // Pokemon cards: parse title for card number and set
-  if (itemMeta?.category === 'Karty Pokemon' && itemMeta.title) {
-    const parsed = parsePokemonTitle(itemMeta.title)
-    if (parsed.pokemonName)  knownFacts.push(`Nazwa Pokemona: ${parsed.pokemonName}`)
-    if (parsed.cardNumber)   knownFacts.push(`Numer karty: ${parsed.cardNumber}`)
-    if (parsed.setCode)      knownFacts.push(`Skrót serii: ${parsed.setCode}`)
-    if (parsed.setName)      knownFacts.push(`Pełna nazwa serii: ${parsed.setName}`)
-  }
-
   // Pokemon boxes: include box type from metadata
   if (itemMeta?.category === 'Boxy Pokemon' && itemMeta.metadata?.box_type) {
     const label = BOX_TYPE_LABELS[itemMeta.metadata.box_type] ?? itemMeta.metadata.box_type
@@ -156,8 +147,12 @@ export async function generateDescription(
     ? `\nZNANE DANE O PRZEDMIOCIE (użyj ich priorytetowo, nie odczytuj ich ze zdjęcia):\n${knownFacts.map(f => `- ${f}`).join('\n')}\n`
     : ''
 
+  const pokemonCardNote = itemMeta?.category === 'Karty Pokemon'
+    ? `\nTo jest karta Pokemon TCG. Na podstawie tytułu samodzielnie zidentyfikuj: nazwę Pokemona, numer karty (format NNN/NNN) oraz pełną nazwę dodatku — rozwiązując skrót serii zawarty w tytule (np. SVI → "Scarlet & Violet", MEW → "Pokémon 151", PRE → "Prismatic Evolutions"). Użyj swojej wiedzy o zestawach Pokemon TCG — nie polegaj na zdjęciu w kwestii nazwy serii.\n`
+    : ''
+
   const prompt = `Jesteś asystentem tworzącym opisy ogłoszeń sprzedażowych na podstawie zdjęć produktów.
-${factsSection}
+${factsSection}${pokemonCardNote}
 Przeanalizuj zdjęcie i wypełnij poniższy szablon. Dla każdej zmiennej w nawiasach kwadratowych [ZMIENNA] wstaw wartość — najpierw z powyższych znanych danych, a jeśli tam jej nie ma to odczytaj ze zdjęcia. Jeśli nie możesz odczytać wartości — zostaw oryginalny tekst zmiennej bez zmian.
 
 SZABLON TYTUŁU:
