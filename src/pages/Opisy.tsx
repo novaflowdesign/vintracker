@@ -102,10 +102,15 @@ function GenerationModal({
   return createPortal(
     <>
       <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 rounded-t-3xl max-h-[92vh] flex flex-col settings-sheet">
+      <div className={[
+        'fixed z-50 bg-white dark:bg-slate-900 flex flex-col settings-sheet',
+        'inset-x-0 bottom-0 rounded-t-3xl max-h-[92vh]',
+        'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+        'sm:rounded-2xl sm:w-full sm:max-w-md sm:max-h-[85vh] sm:shadow-2xl',
+      ].join(' ')}>
 
-        {/* Handle + close */}
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
+        {/* Handle (mobile only) + close */}
+        <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
         </div>
         <button
@@ -115,7 +120,7 @@ function GenerationModal({
           <X size={20} />
         </button>
 
-        <div className="overflow-y-auto flex-1 px-4 pb-8 pt-2" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
+        <div className="overflow-y-auto flex-1 px-4 pb-8 pt-2 sm:pt-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
           {/* Photo */}
           {photoUrl && (
             <div className="w-full aspect-square max-h-48 rounded-2xl overflow-hidden mb-4">
@@ -235,15 +240,20 @@ function BundleChildrenSheet({
   return createPortal(
     <>
       <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 rounded-t-3xl max-h-[85vh] flex flex-col settings-sheet">
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
+      <div className={[
+        'fixed z-50 bg-white dark:bg-slate-900 flex flex-col settings-sheet',
+        'inset-x-0 bottom-0 rounded-t-3xl max-h-[85vh]',
+        'sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2',
+        'sm:rounded-2xl sm:w-full sm:max-w-lg sm:max-h-[80vh] sm:shadow-2xl',
+      ].join(' ')}>
+        <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
         </div>
         <button onClick={onClose} className="absolute top-3 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
           <X size={20} />
         </button>
 
-        <div className="overflow-y-auto flex-1 px-4 pb-8 pt-2" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
+        <div className="overflow-y-auto flex-1 px-4 pb-8 pt-2 sm:pt-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
           <p className="font-semibold text-gray-900 dark:text-white mb-1 pr-8">{bundle.title}</p>
           <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
             {inStock.length} {inStock.length === 1 ? 'karta w magazynie' : 'kart w magazynie'} — wybierz kartę żeby wygenerować opis
