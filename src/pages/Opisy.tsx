@@ -49,6 +49,12 @@ function GenerationModal({
     }
   }, [item.id])
 
+  useEffect(() => {
+    if (templates.length === 0 || selectedId) return
+    const match = templates.find(t => t.name === item.category)
+    setSelectedId(match?.id ?? templates[0]?.id ?? '')
+  }, [templates]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const hasKey = !!getGeminiKey()
   const isShoe = item.category === 'Buty piłkarskie'
   const selectedTemplate = templates.find(t => t.id === selectedId) ?? templates[0]
