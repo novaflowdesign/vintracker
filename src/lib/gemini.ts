@@ -188,22 +188,42 @@ ${POKEMON_HASHTAGS}`
 
 // ── Card photo analysis ───────────────────────────────────────────────────────
 
+async function compressImageBlob(source: Blob, maxDim = 1024): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(source)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const ratio = Math.min(1, maxDim / img.width, maxDim / img.height)
+      const canvas = document.createElement('canvas')
+      canvas.width  = Math.round(img.width  * ratio)
+      canvas.height = Math.round(img.height * ratio)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error('Kompresja zdjęcia nie powiodła się')),
+        'image/jpeg',
+        0.85,
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Nie można wczytać zdjęcia')) }
+    img.src = url
+  })
+}
+
 export async function analyzeCardPhoto(image: File | string): Promise<{ title: string }> {
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
 
   let base64: string
-  let mimeType: string
 
   if (image instanceof File) {
-    base64   = await blobToBase64(image)
-    mimeType = image.type || 'image/jpeg'
+    const compressed = await compressImageBlob(image)
+    base64 = await blobToBase64(compressed)
   } else {
     const res = await fetch(image)
     if (!res.ok) throw new Error('Nie można pobrać zdjęcia')
-    const blob = await res.blob()
-    base64   = await blobToBase64(blob)
-    mimeType = blob.type || 'image/jpeg'
+    const compressed = await compressImageBlob(await res.blob())
+    base64 = await blobToBase64(compressed)
   }
 
   const prompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
@@ -220,7 +240,7 @@ Reply with ONLY valid JSON, no extra text:
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: [
-        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
         { type: 'text', text: prompt },
       ]}],
       temperature: 0,
