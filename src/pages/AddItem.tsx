@@ -14,24 +14,79 @@ import type { BundleChildInput } from '../features/items/api'
 import { CATEGORIES } from '../lib/constants'
 import { analyzeCardPhoto, getGeminiKey } from '../lib/gemini'
 
-// ── per-item draft type for bundle mode ───────────────────────────────────────
+// ── constants ─────────────────────────────────────────────────────────────────
+
+const SHOE_LEVEL_OPTIONS = [
+  { value: '',               label: '— poziom —' },
+  { value: 'amatorski',        label: 'Amatorski' },
+  { value: 'półprofesjonalny', label: 'Półprofesjonalny' },
+  { value: 'profesjonalny',    label: 'Profesjonalny' },
+]
+const SHOE_TYPE_OPTIONS = [
+  { value: '',        label: '— typ —' },
+  { value: 'lanki',   label: 'Lanki (FG)' },
+  { value: 'turfy',   label: 'Turfy (TF)' },
+  { value: 'mixy',    label: 'Mixy (SG)' },
+  { value: 'halówki', label: 'Halówki (IC)' },
+]
+const BOX_TYPE_OPTIONS = [
+  { value: '',                label: '— rodzaj —' },
+  { value: 'etb',             label: 'Elite Trainer Box (ETB)' },
+  { value: 'blister',         label: 'Blister' },
+  { value: 'puszka_tin',      label: 'Puszka Tin' },
+  { value: 'puszka_mini_tin', label: 'Puszka Mini Tin' },
+  { value: 'pokeball_tin',    label: 'Pokeball Tin' },
+]
+const SLAB_COMPANY_OPTIONS = [
+  { value: '',    label: '— firma —' },
+  { value: 'PSA', label: 'PSA' },
+  { value: 'CGC', label: 'CGC' },
+  { value: 'ACE', label: 'ACE' },
+  { value: 'TAG', label: 'TAG' },
+]
+const categoryOptions = [{ value: '', label: '— kategoria —' }, ...CATEGORIES.map(c => ({ value: c, label: c }))]
+
+// ── per-item draft type ────────────────────────────────────────────────────────
 
 type BundleItemDraft = {
   id: string
   title: string
   category: string
   price: string
+  size: string
+  meta_shoe_level: string
+  meta_shoe_type: string
+  meta_box_type: string
+  meta_slab_company: string
+  meta_slab_grade: string
   photoFile: File | null
   photoPreview: string | null
   analyzing: boolean
 }
 
 function makeDraft(idx: number): BundleItemDraft {
-  return { id: `draft-${Date.now()}-${idx}`, title: '', category: '', price: '', photoFile: null, photoPreview: null, analyzing: false }
+  return {
+    id: `draft-${Date.now()}-${idx}`,
+    title: '',
+    category: '',
+    price: '',
+    size: '',
+    meta_shoe_level: '',
+    meta_shoe_type: '',
+    meta_box_type: '',
+    meta_slab_company: '',
+    meta_slab_grade: '10',
+    photoFile: null,
+    photoPreview: null,
+    analyzing: false,
+  }
 }
 
-const ANALYZABLE = ['Karty Pokemon', 'Slab Pokemon']
-const categoryOptions = [{ value: '', label: '— wybierz —' }, ...CATEGORIES.map(c => ({ value: c, label: c }))]
+// ── shared select/input class helpers ─────────────────────────────────────────
+
+const fieldCls = 'rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition appearance-none w-full'
+
+// ── component ─────────────────────────────────────────────────────────────────
 
 export default function AddItem() {
   const navigate = useNavigate()
@@ -56,7 +111,7 @@ export default function AddItem() {
   const [targetItemId, setTargetItemId] = useState<string | null>(null)
   const bundleFileRef = useRef<HTMLInputElement>(null)
 
-  // sync bundleItems array length to bundleSize
+  // sync bundleItems length to bundleSize
   useEffect(() => {
     setBundleItems(prev => {
       if (bundleSize <= prev.length) return prev.slice(0, bundleSize)
@@ -64,6 +119,15 @@ export default function AddItem() {
       return [...prev, ...extra]
     })
   }, [bundleSize])
+
+  // auto-sum total from individual item prices
+  useEffect(() => {
+    const sum = bundleItems.reduce((acc, item) => {
+      const p = parseFloat(item.price.replace(',', '.'))
+      return acc + (isNaN(p) ? 0 : p)
+    }, 0)
+    setTotalBundlePrice(sum > 0 ? sum.toFixed(2) : '')
+  }, [bundleItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // cleanup previews on unmount
   useEffect(() => {
@@ -77,14 +141,13 @@ export default function AddItem() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
   const watchedCategory = form.watch('category')
-  const canAnalyze = !!photoFile && !!getGeminiKey() && ANALYZABLE.includes(watchedCategory ?? '')
+  const canAnalyze = !!photoFile && !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
 
-  // for bundle mode: purchase_price is computed from items, not from form
   useEffect(() => {
     if (isBundle) form.setValue('purchase_price', 0)
   }, [isBundle]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── single-item photo handlers ─────────────────────────────────────────────
+  // ── single-item handlers ───────────────────────────────────────────────────
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -114,7 +177,7 @@ export default function AddItem() {
     }
   }
 
-  // ── bundle price helpers ───────────────────────────────────────────────────
+  // ── bundle helpers ─────────────────────────────────────────────────────────
   function dividePriceEqually() {
     const total = parseFloat(totalBundlePrice.replace(',', '.'))
     if (!total || bundleSize < 1) return
@@ -122,28 +185,38 @@ export default function AddItem() {
     setBundleItems(prev => prev.map(item => ({ ...item, price: unit })))
   }
 
-  // ── bundle item photo handlers ─────────────────────────────────────────────
+  function updateItem_(id: string, patch: Partial<BundleItemDraft>) {
+    setBundleItems(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item))
+  }
+
+  function stepGrade(id: string, delta: number) {
+    setBundleItems(prev => prev.map(item => {
+      if (item.id !== id) return item
+      const current = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
+      const next = Math.round((current + delta) * 2) / 2
+      if (next < 1 || next > 10) return item
+      return { ...item, meta_slab_grade: next.toString() }
+    }))
+  }
+
   function handleBundleItemPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !targetItemId) return
     const preview = URL.createObjectURL(file)
-    setBundleItems(prev => prev.map(item =>
-      item.id === targetItemId ? { ...item, photoFile: file, photoPreview: preview } : item
-    ))
+    updateItem_(targetItemId, { photoFile: file, photoPreview: preview })
     if (bundleFileRef.current) bundleFileRef.current.value = ''
   }
 
-  // ── per-item AI analyze ────────────────────────────────────────────────────
-  async function analyzeItemPhoto(itemId: string) {
-    const item = bundleItems.find(i => i.id === itemId)
+  async function analyzeItemPhoto(id: string) {
+    const item = bundleItems.find(i => i.id === id)
     if (!item?.photoFile) { toast.error('Brak zdjęcia do analizy'); return }
-    setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, analyzing: true } : i))
+    updateItem_(id, { analyzing: true })
     try {
       const { title } = await analyzeCardPhoto(item.photoFile)
-      setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, title, analyzing: false } : i))
+      updateItem_(id, { title, analyzing: false })
       toast.success('Tytuł uzupełniony')
     } catch (err) {
-      setBundleItems(prev => prev.map(i => i.id === itemId ? { ...i, analyzing: false } : i))
+      updateItem_(id, { analyzing: false })
       toast.error(err instanceof Error ? err.message : 'Błąd analizy')
     }
   }
@@ -163,17 +236,27 @@ export default function AddItem() {
       const { meta_shoe_level, meta_shoe_type, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
 
       if (isBundle) {
-        const childInputs: BundleChildInput[] = bundleItems.map((item, i) => ({
-          title:          item.title.trim() || `Przedmiot ${i + 1}`,
-          category:       item.category || null,
-          purchase_price: parseFloat(item.price.replace(',', '.')) || 0,
-        }))
+        const childInputs: BundleChildInput[] = bundleItems.map((item, i) => {
+          const childMeta: Record<string, string> = {}
+          if (item.meta_shoe_level)   childMeta.shoe_level   = item.meta_shoe_level
+          if (item.meta_shoe_type)    childMeta.shoe_type    = item.meta_shoe_type
+          if (item.meta_box_type)     childMeta.box_type     = item.meta_box_type
+          if (item.meta_slab_company) childMeta.slab_company = item.meta_slab_company
+          if (item.meta_slab_grade)   childMeta.slab_grade   = item.meta_slab_grade
+          return {
+            title:          item.title.trim() || `Przedmiot ${i + 1}`,
+            category:       item.category || null,
+            purchase_price: parseFloat(item.price.replace(',', '.')) || 0,
+            size:           item.size || null,
+            metadata:       Object.keys(childMeta).length ? childMeta : null,
+          }
+        })
         const totalPrice = childInputs.reduce((s, c) => s + c.purchase_price, 0)
 
         const { parent, children } = await createBundle.mutateAsync({
           input: {
             ...formData,
-            purchase_price: totalPrice,
+            purchase_price:  totalPrice,
             description:     formData.description     || null,
             category:        formData.category        || null,
             brand:           formData.brand           || null,
@@ -182,12 +265,12 @@ export default function AddItem() {
             received_date:   formData.received_date   || null,
             purchase_source: formData.purchase_source || null,
             notes:           formData.notes           || null,
-            metadata:        Object.keys(meta).length ? meta : null,
+            metadata:        null,
           },
           childInputs,
         })
 
-        // upload per-item photos; use first child's path as parent cover
+        // upload per-item photos; first child's path becomes the bundle cover
         let parentPhotoPatch: string | null = null
         await Promise.all(children.map(async (child, i) => {
           const draft = bundleItems[i]
@@ -196,7 +279,7 @@ export default function AddItem() {
             const path = await uploadPhoto(child.id, draft.photoFile)
             await updateItem.mutateAsync({ id: child.id, patch: { photo_path: path } })
             if (i === 0) parentPhotoPatch = path
-          } catch { /* photo upload failure is non-fatal */ }
+          } catch { /* non-fatal */ }
         }))
         if (parentPhotoPatch) {
           await updateItem.mutateAsync({ id: parent.id, patch: { photo_path: parentPhotoPatch } })
@@ -264,6 +347,7 @@ export default function AddItem() {
           {isBundle ? (
             /* ── BUNDLE MODE ──────────────────────────────────────────────── */
             <div className="space-y-4">
+
               {/* Bundle label */}
               <Input
                 label="Tytuł zestawu *"
@@ -272,18 +356,22 @@ export default function AddItem() {
                 {...form.register('title')}
               />
 
-              {/* Total price + divide */}
+              {/* Total price display + divide */}
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
-                  <Input
-                    label="Łączna cena zamówienia"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    suffix="zł"
-                    value={totalBundlePrice}
-                    onChange={e => setTotalBundlePrice(e.target.value)}
-                  />
+                  <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Łączna cena zamówienia</p>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={totalBundlePrice}
+                      onChange={e => setTotalBundlePrice(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 pr-10 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    />
+                    <span className="pointer-events-none absolute right-3 text-sm text-gray-400 dark:text-slate-500">zł</span>
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -308,12 +396,16 @@ export default function AddItem() {
               {/* Per-item rows */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
                   {bundleItems.map((item, i) => {
-                    const canAnalyzeItem = !!getGeminiKey() && !!item.photoFile && ANALYZABLE.includes(item.category)
+                    const isShoes   = item.category === 'Buty piłkarskie'
+                    const isPokebox = item.category === 'Boxy Pokemon'
+                    const isSlab    = item.category === 'Slab Pokemon'
+                    const grade     = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
                     return (
                       <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-2">
-                        {/* row 1: number, photo, analyze, title */}
+
+                        {/* row 1: number · photo · analyze · title */}
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-400 dark:text-slate-500 w-5 shrink-0 text-right">{i + 1}.</span>
                           <button
@@ -326,7 +418,7 @@ export default function AddItem() {
                               : <ImagePlus size={14} className="text-gray-400 dark:text-slate-500" />
                             }
                           </button>
-                          {canAnalyzeItem && (
+                          {item.photoFile && getGeminiKey() && (
                             <button
                               type="button"
                               disabled={item.analyzing}
@@ -343,17 +435,18 @@ export default function AddItem() {
                           <input
                             type="text"
                             value={item.title}
-                            onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, title: e.target.value } : x))}
+                            onChange={e => updateItem_(item.id, { title: e.target.value })}
                             placeholder={`Przedmiot ${i + 1}`}
                             className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                           />
                         </div>
-                        {/* row 2: category + price */}
+
+                        {/* row 2: category · price */}
                         <div className="flex gap-2 pl-7">
                           <select
                             value={item.category}
-                            onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, category: e.target.value } : x))}
-                            className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition appearance-none"
+                            onChange={e => updateItem_(item.id, { category: e.target.value })}
+                            className={`flex-1 min-w-0 ${fieldCls}`}
                           >
                             {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                           </select>
@@ -363,13 +456,68 @@ export default function AddItem() {
                               min="0"
                               step="0.01"
                               value={item.price}
-                              onChange={e => setBundleItems(prev => prev.map(x => x.id === item.id ? { ...x, price: e.target.value } : x))}
+                              onChange={e => updateItem_(item.id, { price: e.target.value })}
                               placeholder="0.00"
                               className="w-24 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 pr-7 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
                           </div>
                         </div>
+
+                        {/* Buty piłkarskie — rozmiar + poziom + typ */}
+                        {isShoes && (
+                          <div className="pl-7 flex gap-2">
+                            <input
+                              type="text"
+                              value={item.size}
+                              onChange={e => updateItem_(item.id, { size: e.target.value })}
+                              placeholder="Rozmiar"
+                              className="w-20 shrink-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                            />
+                            <select value={item.meta_shoe_level} onChange={e => updateItem_(item.id, { meta_shoe_level: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
+                              {SHOE_LEVEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                            <select value={item.meta_shoe_type} onChange={e => updateItem_(item.id, { meta_shoe_type: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
+                              {SHOE_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Boxy Pokemon — rodzaj boxa */}
+                        {isPokebox && (
+                          <div className="pl-7">
+                            <select value={item.meta_box_type} onChange={e => updateItem_(item.id, { meta_box_type: e.target.value })} className={fieldCls}>
+                              {BOX_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Slab Pokemon — firma + ocena */}
+                        {isSlab && (
+                          <div className="pl-7 flex items-center gap-2">
+                            <select value={item.meta_slab_company} onChange={e => updateItem_(item.id, { meta_slab_company: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
+                              {SLAB_COMPANY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => stepGrade(item.id, -0.5)}
+                                disabled={grade <= 1}
+                                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-base font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              >−</button>
+                              <span className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">
+                                {grade % 1 === 0 ? grade.toFixed(0) : grade.toFixed(1)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => stepGrade(item.id, +0.5)}
+                                disabled={grade >= 10}
+                                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-base font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              >+</button>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     )
                   })}
@@ -394,21 +542,16 @@ export default function AddItem() {
                     label="Data przyjęcia na magazyn"
                     type="date"
                     hint="Zostaw puste jeśli już masz."
-                    error={form.formState.errors.received_date?.message}
                     {...form.register('received_date')}
                   />
                 </div>
-                <Input
-                  label="Źródło zakupu"
-                  placeholder=""
-                  {...form.register('purchase_source')}
-                />
                 <Input
                   label="Notatki"
                   placeholder=""
                   {...form.register('notes')}
                 />
               </div>
+
             </div>
           ) : (
             /* ── SINGLE ITEM MODE ─────────────────────────────────────────── */

@@ -92,6 +92,8 @@ export type BundleChildInput = {
   title: string
   category?: string | null
   purchase_price: number
+  size?: string | null
+  metadata?: Record<string, string> | null
 }
 
 export async function createBundle(
@@ -118,6 +120,8 @@ export async function createBundle(
     purchase_date:  input.purchase_date,
     received_date:  input.received_date ?? null,
     category:       child.category ?? null,
+    size:           child.size ?? null,
+    metadata:       child.metadata ?? null,
     status:         'IN_STOCK',
     bundle_id:      parent.id,
     shipping_cost_paid_by_seller: 0,
