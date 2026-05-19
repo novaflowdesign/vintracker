@@ -35,15 +35,22 @@ export function parsePokemonTitle(title: string): {
   const numberMatch = title.match(/(\d{2,3}\/\d{2,3})/)
   const cardNumber = numberMatch?.[1] ?? null
 
+  const LANG_SUFFIXES = /(?:EN|DE|FR|ES|IT|KO|JP|TW)$/
+
   const words = title.split(/\s+/)
   let setCode: string | null = null
   let setName: string | null = null
   for (const word of [...words].reverse()) {
     const clean = word.replace(/[^A-Za-z]/g, '').toUpperCase()
-    if (clean.length >= 2 && clean.length <= 4) {
-      const name = setNameFromCode(clean)
-      if (name) { setCode = clean; setName = name; break }
+    // try as-is (2–4 chars), then try stripping language suffix (e.g. SVIEN → SVI)
+    const candidates = [clean, clean.replace(LANG_SUFFIXES, '')].filter(
+      c => c.length >= 2 && c.length <= 4,
+    )
+    for (const candidate of candidates) {
+      const name = setNameFromCode(candidate)
+      if (name) { setCode = candidate; setName = name; break }
     }
+    if (setCode) break
   }
 
   let pokemonName = title

@@ -228,7 +228,7 @@ export async function analyzeCardPhoto(image: File | string): Promise<{ title: s
 
   const prompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
 1. Card name — printed in the top-left area (e.g. "Pikachu ex", "Charizard VMAX")
-2. Set code — 2–4 uppercase letters in the bottom-left corner (e.g. "SVI", "MEG")
+2. Set code — 2–4 uppercase letters in the bottom-left corner (e.g. "SVI", "MEG"). IMPORTANT: ignore any language suffix printed after the code such as EN, DE, FR, ES — return ONLY the set code letters without the language suffix.
 3. Card number — bottom-left corner, format NNN/NNN (e.g. "025/198")
 
 Reply with ONLY valid JSON, no extra text:
