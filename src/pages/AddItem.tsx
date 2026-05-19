@@ -11,7 +11,6 @@ import ItemFormFields from '../features/items/ItemFormFields'
 import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
 import { formatCurrency } from '../utils/format'
-import { setNameFromCode } from '../lib/pokemonSets'
 
 export default function AddItem() {
   const navigate = useNavigate()
@@ -58,18 +57,11 @@ export default function AddItem() {
     setSubmitting(true)
     try {
       const meta: Record<string, string> = {}
-      if (data.meta_card_number?.trim()) meta.card_number = data.meta_card_number.trim()
-      if (data.meta_set_code?.trim()) {
-        const code = data.meta_set_code.trim().toUpperCase()
-        meta.set_code = code
-        const name = setNameFromCode(code)
-        if (name) meta.set_name = name
-      }
       if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
       if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_card_number, meta_set_code, meta_shoe_level, meta_shoe_type, ...formData } = data
+      const { meta_shoe_level, meta_shoe_type, ...formData } = data
       const input = {
         ...formData,
         purchase_price:  Number(data.purchase_price),
@@ -190,7 +182,7 @@ export default function AddItem() {
             </div>
           )}
 
-          <ItemFormFields form={form} isBundle={isBundle} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
+          <ItemFormFields form={form} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
 
           <div className="flex gap-3 pt-2">
             <Button

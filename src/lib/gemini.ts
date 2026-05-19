@@ -1,3 +1,5 @@
+import { parsePokemonTitle } from './pokemonSets'
+
 const KEY_STORAGE  = 'vt_groq_key'
 const DESCS_STORAGE = 'vt_generated_descs'
 
@@ -42,7 +44,50 @@ export function getAllGeneratedDescs(): Record<string, GeneratedDesc> {
   return readAll()
 }
 
-// ── Gemini API call ───────────────────────────────────────────────────────────
+// ── Shoe description (no AI) ─────────────────────────────────────────────────
+
+const SHOE_LEVEL_LABELS: Record<string, string> = {
+  amatorski:        'Amatorski',
+  półprofesjonalny: 'Półprofesjonalny',
+  profesjonalny:    'Profesjonalny',
+}
+const SHOE_TYPE_LABELS: Record<string, string> = {
+  lanki:    'Korki (FG)',
+  turfy:    'Turfy (TF)',
+  mixy:     'Mixy (SG)',
+  halówki:  'Halówki (IC)',
+}
+
+function generateShoeDescriptionDirect(meta: {
+  title?: string
+  size?: string | null
+  brand?: string | null
+  metadata?: Record<string, string> | null
+}): { title: string; description: string } {
+  const title  = meta.title  ?? '[Tytuł z magazynu]'
+  const size   = meta.size   ?? '[Rozmiar]'
+  const brand  = meta.brand  ?? '[Marka buta]'
+  const level  = SHOE_LEVEL_LABELS[meta.metadata?.shoe_level ?? ''] ?? meta.metadata?.shoe_level ?? '[Poziom buta]'
+  const type   = SHOE_TYPE_LABELS[meta.metadata?.shoe_type  ?? ''] ?? meta.metadata?.shoe_type  ?? '[Typ buta]'
+
+  const description = `${title}
+
+📏 Rozmiar buta: ${size}
+
+👟 Rodzaj: ${level}
+
+⚽️ Typ: ${type}
+
+✅ Oryginalne buty ${brand}
+
+🚚 Wysyłka: InPost – dobrze zabezpieczona
+
+#butypiłkarskie #korki #korkipiłkarskie #nikeair #nikemercurial #nikesuperfly #niketiempo #nikephantom #nikevapor #nikemagista #adidasf50 #adidaspredator #adidascopa #footballshoes #kopacky #fodboldstovler #cipo`
+
+  return { title, description }
+}
+
+// ── Groq API call ─────────────────────────────────────────────────────────────
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -65,6 +110,11 @@ export async function generateDescription(
     brand?: string | null
   },
 ): Promise<{ title: string; description: string }> {
+  // Shoes: instant generation from stored data, no API call
+  if (itemMeta?.category === 'Buty piłkarskie') {
+    return generateShoeDescriptionDirect(itemMeta)
+  }
+
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
 
@@ -75,14 +125,18 @@ export async function generateDescription(
   const mimeType = blob.type || 'image/jpeg'
 
   const knownFacts: string[] = []
-  if (itemMeta?.title)                          knownFacts.push(`Tytuł przedmiotu: ${itemMeta.title}`)
-  if (itemMeta?.brand)                          knownFacts.push(`Marka: ${itemMeta.brand}`)
-  if (itemMeta?.size)                           knownFacts.push(`Rozmiar: ${itemMeta.size}`)
-  if (itemMeta?.metadata?.card_number)          knownFacts.push(`Numer karty: ${itemMeta.metadata.card_number}`)
-  if (itemMeta?.metadata?.set_code)             knownFacts.push(`Skrót serii: ${itemMeta.metadata.set_code}`)
-  if (itemMeta?.metadata?.set_name)             knownFacts.push(`Pełna nazwa serii: ${itemMeta.metadata.set_name}`)
-  if (itemMeta?.metadata?.shoe_level)           knownFacts.push(`Poziom: ${itemMeta.metadata.shoe_level}`)
-  if (itemMeta?.metadata?.shoe_type)            knownFacts.push(`Typ obuwia: ${itemMeta.metadata.shoe_type}`)
+  if (itemMeta?.title)  knownFacts.push(`Tytuł przedmiotu: ${itemMeta.title}`)
+  if (itemMeta?.brand)  knownFacts.push(`Marka: ${itemMeta.brand}`)
+  if (itemMeta?.size)   knownFacts.push(`Rozmiar: ${itemMeta.size}`)
+
+  // Pokemon: parse title for card number and set
+  if (itemMeta?.category === 'Karty Pokemon' && itemMeta.title) {
+    const parsed = parsePokemonTitle(itemMeta.title)
+    if (parsed.pokemonName)  knownFacts.push(`Nazwa Pokemona: ${parsed.pokemonName}`)
+    if (parsed.cardNumber)   knownFacts.push(`Numer karty: ${parsed.cardNumber}`)
+    if (parsed.setCode)      knownFacts.push(`Skrót serii: ${parsed.setCode}`)
+    if (parsed.setName)      knownFacts.push(`Pełna nazwa serii: ${parsed.setName}`)
+  }
 
   const factsSection = knownFacts.length
     ? `\nZNANE DANE O PRZEDMIOCIE (użyj ich priorytetowo, nie odczytuj ich ze zdjęcia):\n${knownFacts.map(f => `- ${f}`).join('\n')}\n`

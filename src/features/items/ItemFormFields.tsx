@@ -1,10 +1,8 @@
-import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import Input from '../../components/Input'
 import Select from '../../components/Select'
 import Textarea from '../../components/Textarea'
 import { CATEGORIES } from '../../lib/constants'
-import { setNameFromCode } from '../../lib/pokemonSets'
 import type { ItemFormData } from './itemSchema'
 
 const categoryOptions = CATEGORIES.map(c => ({ value: c, label: c }))
@@ -25,30 +23,18 @@ const SHOE_TYPE_OPTIONS = [
 interface Props {
   form: UseFormReturn<ItemFormData>
   priceLabelOverride?: string
-  isBundle?: boolean
 }
 
-export default function ItemFormFields({ form, priceLabelOverride, isBundle = false }: Props) {
+export default function ItemFormFields({ form, priceLabelOverride }: Props) {
   const {
     register,
     watch,
-    setValue,
     formState: { errors },
   } = form
 
-  const category  = watch('category')
-  const setCode   = watch('meta_set_code')
-  const setName   = setCode ? setNameFromCode(setCode) : ''
-  const showSize  = category === 'Buty piłkarskie'
-  const isPokemon = category === 'Karty Pokemon'
-  const isShoes   = category === 'Buty piłkarskie'
-
-  useEffect(() => {
-    if (isPokemon && setCode) {
-      const name = setNameFromCode(setCode)
-      if (name) setValue('meta_set_code', setCode.toUpperCase().trim())
-    }
-  }, [isPokemon, setCode, setValue])
+  const category = watch('category')
+  const showSize = category === 'Buty piłkarskie'
+  const isShoes  = category === 'Buty piłkarskie'
 
   return (
     <div className="space-y-4">
@@ -117,35 +103,6 @@ export default function ItemFormFields({ form, priceLabelOverride, isBundle = fa
         error={errors.received_date?.message}
         {...register('received_date')}
       />
-
-      {/* Karty Pokemon — dodatkowe pola (tylko dla pojedynczych kart) */}
-      {isPokemon && !isBundle && (
-        <div className="space-y-3 p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-200 dark:border-yellow-800">
-          <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">Karty Pokemon</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Numer karty"
-              placeholder="np. 025/191"
-              error={errors.meta_card_number?.message}
-              {...register('meta_card_number')}
-            />
-            <div className="flex flex-col gap-1">
-              <Input
-                label="Skrót serii"
-                placeholder="np. MEW"
-                error={errors.meta_set_code?.message}
-                {...register('meta_set_code')}
-              />
-              {setName && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ {setName}</p>
-              )}
-              {setCode && !setName && setCode.length >= 2 && (
-                <p className="text-xs text-slate-400">Nieznana seria — zostanie użyty skrót</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Buty piłkarskie — dodatkowe pola */}
       {isShoes && (

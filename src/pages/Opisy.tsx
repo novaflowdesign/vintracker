@@ -56,6 +56,7 @@ function GenerationModal({
   }, [item.id])
 
   const hasKey = !!getGeminiKey()
+  const isShoe = item.category === 'Buty piłkarskie'
   const selectedTemplate = templates.find(t => t.id === selectedId)
 
   async function generate() {
@@ -130,22 +131,22 @@ function GenerationModal({
 
           <p className="font-semibold text-gray-900 dark:text-white mb-4 truncate">{item.title}</p>
 
-          {/* Warnings */}
-          {!hasKey && (
+          {/* Warnings — not shown for shoes (no API needed) */}
+          {!isShoe && !hasKey && (
             <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 mb-4">
               <AlertCircle size={15} className="text-amber-600 shrink-0" />
               <p className="text-sm text-amber-700 dark:text-amber-400">Brak klucza Groq API — skonfiguruj go w Ustawieniach.</p>
             </div>
           )}
-          {hasKey && templates.length === 0 && (
+          {!isShoe && hasKey && templates.length === 0 && (
             <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 mb-4">
               <AlertCircle size={15} className="text-amber-600 shrink-0" />
               <p className="text-sm text-amber-700 dark:text-amber-400">Brak szablonów — dodaj szablon w Ustawieniach.</p>
             </div>
           )}
 
-          {/* Template selector */}
-          {templates.length > 1 && (
+          {/* Template selector — not needed for shoes */}
+          {!isShoe && templates.length > 1 && (
             <select
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
@@ -154,14 +155,14 @@ function GenerationModal({
               {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           )}
-          {templates.length === 1 && (
+          {!isShoe && templates.length === 1 && (
             <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Szablon: {templates[0].name}</p>
           )}
 
           {/* Generate button */}
           <button
             onClick={generate}
-            disabled={generating || !hasKey || !selectedTemplate || !photoUrl}
+            disabled={generating || (!isShoe && (!hasKey || !selectedTemplate || !photoUrl))}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 text-sm transition-colors mb-5"
           >
             {generating
