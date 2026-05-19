@@ -300,7 +300,7 @@ export default function Opisy() {
   const [selectedBundle, setSelectedBundle] = useState<Item | null>(null)
   const [generated, setGenerated] = useState<Record<string, GeneratedDesc>>(() => getAllGeneratedDescs())
 
-  const itemsWithPhoto = items.filter(i => i.photo_path)
+  const itemsWithPhoto = items.filter(i => i.photo_path && i.status !== 'SOLD')
 
   function handleSaved(itemId: string, desc: GeneratedDesc) {
     setGenerated(prev => ({ ...prev, [itemId]: desc }))
