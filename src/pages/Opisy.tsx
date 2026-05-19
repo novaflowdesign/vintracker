@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, Package, Copy, Check, RefreshCw, X, AlertCircle, Loader2 } from 'lucide-react'
+import { FileText, Package, Copy, Check, RefreshCw, X, AlertCircle, Loader2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
-import { useItems, usePhotoUrl } from '../features/items/queries'
+import { useItems, usePhotoUrl, useBundleChildren } from '../features/items/queries'
 import { getGeminiKey, generateDescription, getGeneratedDesc, saveGeneratedDesc, getAllGeneratedDescs, type GeneratedDesc } from '../lib/gemini'
 import { getTemplates, type Template } from '../lib/templates'
 import type { Item } from '../types/item'
@@ -216,17 +216,97 @@ function GenerationModal({
   )
 }
 
+// ── bundle children sheet ─────────────────────────────────────────────────────
+
+function BundleChildrenSheet({
+  bundle,
+  generated,
+  onClose,
+  onSelectChild,
+}: {
+  bundle: Item
+  generated: Record<string, GeneratedDesc>
+  onClose: () => void
+  onSelectChild: (child: Item) => void
+}) {
+  const { data: children = [], isLoading } = useBundleChildren(bundle.id)
+  const inStock = children.filter(c => c.status === 'IN_STOCK')
+
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-slate-900 rounded-t-3xl max-h-[85vh] flex flex-col settings-sheet">
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+        </div>
+        <button onClick={onClose} className="absolute top-3 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+          <X size={20} />
+        </button>
+
+        <div className="overflow-y-auto flex-1 px-4 pb-8 pt-2" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
+          <p className="font-semibold text-gray-900 dark:text-white mb-1 pr-8">{bundle.title}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+            {inStock.length} {inStock.length === 1 ? 'karta w magazynie' : 'kart w magazynie'} — wybierz kartę żeby wygenerować opis
+          </p>
+
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 size={24} className="animate-spin text-emerald-500" />
+            </div>
+          ) : inStock.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">Brak kart w magazynie</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {inStock.map(child => {
+                const hasDesc = !!generated[child.id]
+                const photoPath = child.photo_path ?? bundle.photo_path
+                return (
+                  <button
+                    key={child.id}
+                    onClick={() => onSelectChild({ ...child, photo_path: photoPath })}
+                    className="relative rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm text-left group transition-all active:scale-95"
+                  >
+                    <ItemThumb path={photoPath} className="w-full aspect-square" />
+                    {hasDesc && (
+                      <div className="absolute top-2 right-2 bg-emerald-500 rounded-full p-1 shadow">
+                        <Check size={11} className="text-white" strokeWidth={3} />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2.5 pb-2 pt-6">
+                      <p className="text-xs font-medium text-white leading-tight line-clamp-2">{child.title}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </>,
+    document.body,
+  )
+}
+
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function Opisy() {
   const { data: items = [], isLoading } = useItems({})
-  const [selectedItem,  setSelectedItem]  = useState<Item | null>(null)
+  const [selectedItem,   setSelectedItem]   = useState<Item | null>(null)
+  const [selectedBundle, setSelectedBundle] = useState<Item | null>(null)
   const [generated, setGenerated] = useState<Record<string, GeneratedDesc>>(() => getAllGeneratedDescs())
 
   const itemsWithPhoto = items.filter(i => i.photo_path)
 
   function handleSaved(itemId: string, desc: GeneratedDesc) {
     setGenerated(prev => ({ ...prev, [itemId]: desc }))
+  }
+
+  function handleItemClick(item: Item) {
+    if (item.bundle_size != null) {
+      setSelectedBundle(item)
+    } else {
+      setSelectedItem(item)
+    }
   }
 
   if (isLoading) {
@@ -258,14 +338,22 @@ export default function Opisy() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {itemsWithPhoto.map(item => {
-          const hasDesc = !!generated[item.id]
+          const isBundle = item.bundle_size != null
+          const hasDesc  = !!generated[item.id]
           return (
             <button
               key={item.id}
-              onClick={() => setSelectedItem(item)}
+              onClick={() => handleItemClick(item)}
               className="relative rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm text-left group transition-all active:scale-95"
             >
               <ItemThumb path={item.photo_path} className="w-full aspect-square" />
+
+              {/* Bundle indicator */}
+              {isBundle && (
+                <div className="absolute top-2 left-2 bg-violet-500/90 rounded-full p-1 shadow">
+                  <Layers size={11} className="text-white" />
+                </div>
+              )}
 
               {/* Generated badge */}
               {hasDesc && (
@@ -288,6 +376,15 @@ export default function Opisy() {
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {selectedBundle && (
+        <BundleChildrenSheet
+          bundle={selectedBundle}
+          generated={generated}
+          onClose={() => setSelectedBundle(null)}
+          onSelectChild={child => { setSelectedBundle(null); setSelectedItem(child) }}
         />
       )}
     </div>

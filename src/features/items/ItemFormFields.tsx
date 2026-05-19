@@ -18,16 +18,17 @@ const SHOE_LEVEL_OPTIONS = [
 const SHOE_TYPE_OPTIONS = [
   { value: 'lanki',    label: 'Lanki (FG)' },
   { value: 'turfy',   label: 'Turfy (TF)' },
-  { value: 'mixy',    label: 'Mixy (AG)' },
+  { value: 'mixy',    label: 'Mixy (SG)' },
   { value: 'halówki', label: 'Halówki (IC)' },
 ]
 
 interface Props {
   form: UseFormReturn<ItemFormData>
   priceLabelOverride?: string
+  isBundle?: boolean
 }
 
-export default function ItemFormFields({ form, priceLabelOverride }: Props) {
+export default function ItemFormFields({ form, priceLabelOverride, isBundle = false }: Props) {
   const {
     register,
     watch,
@@ -117,8 +118,8 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
         {...register('received_date')}
       />
 
-      {/* Karty Pokemon — dodatkowe pola */}
-      {isPokemon && (
+      {/* Karty Pokemon — dodatkowe pola (tylko dla pojedynczych kart) */}
+      {isPokemon && !isBundle && (
         <div className="space-y-3 p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-200 dark:border-yellow-800">
           <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">Karty Pokemon</p>
           <div className="grid grid-cols-2 gap-3">

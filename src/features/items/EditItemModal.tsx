@@ -154,10 +154,12 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         const path = await uploadPhoto(item.id, photoFile)
         photoPatch = { photo_path: path }
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { meta_card_number, meta_set_code, meta_shoe_level, meta_shoe_type, ...formData } = data
       await updateItem.mutateAsync({
         id: item.id,
         patch: {
-          ...data,
+          ...formData,
           ...photoPatch,
           purchase_price:  Number(data.purchase_price),
           description:     data.description     || null,

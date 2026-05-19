@@ -68,8 +68,10 @@ export default function AddItem() {
       if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
       if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { meta_card_number, meta_set_code, meta_shoe_level, meta_shoe_type, ...formData } = data
       const input = {
-        ...data,
+        ...formData,
         purchase_price:  Number(data.purchase_price),
         description:     data.description     || null,
         category:        data.category        || null,
@@ -188,7 +190,7 @@ export default function AddItem() {
             </div>
           )}
 
-          <ItemFormFields form={form} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
+          <ItemFormFields form={form} isBundle={isBundle} priceLabelOverride={isBundle ? 'Całkowita cena zestawu' : undefined} />
 
           <div className="flex gap-3 pt-2">
             <Button
