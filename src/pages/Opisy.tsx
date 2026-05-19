@@ -4,7 +4,7 @@ import { FileText, Package, Copy, Check, RefreshCw, X, AlertCircle, Loader2, Lay
 import { toast } from 'sonner'
 import { useItems, usePhotoUrl, useBundleChildren } from '../features/items/queries'
 import { getGeminiKey, generateDescription, getGeneratedDesc, saveGeneratedDesc, getAllGeneratedDescs, type GeneratedDesc } from '../lib/gemini'
-import { getTemplates, type Template } from '../lib/templates'
+import { useTemplates } from '../lib/templates'
 import type { Item } from '../types/item'
 
 // ── item thumbnail ────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function GenerationModal({
   onSaved: (itemId: string, desc: GeneratedDesc) => void
 }) {
   const { data: photoUrl } = usePhotoUrl(item.photo_path)
-  const [templates, setTemplates] = useState<Template[]>([])
+  const { data: templates = [] } = useTemplates()
   const [selectedId, setSelectedId] = useState('')
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<{ title: string; description: string } | null>(null)
@@ -39,12 +39,6 @@ function GenerationModal({
   const [copiedDesc,  setCopiedDesc]  = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editDesc,  setEditDesc]  = useState('')
-
-  useEffect(() => {
-    const ts = getTemplates()
-    setTemplates(ts)
-    setSelectedId(ts[0]?.id ?? '')
-  }, [])
 
   useEffect(() => {
     const saved = getGeneratedDesc(item.id)
@@ -57,17 +51,17 @@ function GenerationModal({
 
   const hasKey = !!getGeminiKey()
   const isShoe = item.category === 'Buty piłkarskie'
-  const selectedTemplate = templates.find(t => t.id === selectedId)
+  const selectedTemplate = templates.find(t => t.id === selectedId) ?? templates[0]
 
   async function generate() {
-    if (!photoUrl || !selectedTemplate) return
+    if (!isShoe && (!photoUrl || !selectedTemplate)) return
     setGenerating(true)
     setResult(null)
     try {
       const res = await generateDescription(
-        photoUrl,
-        selectedTemplate.titleTemplate,
-        selectedTemplate.descTemplate,
+        photoUrl ?? '',
+        selectedTemplate?.titleTemplate ?? '',
+        selectedTemplate?.descTemplate ?? '',
         {
           title:    item.title,
           category: item.category,

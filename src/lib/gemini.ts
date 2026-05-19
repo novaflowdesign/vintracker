@@ -46,6 +46,14 @@ export function getAllGeneratedDescs(): Record<string, GeneratedDesc> {
 
 // ── Shoe description (no AI) ─────────────────────────────────────────────────
 
+const BOX_TYPE_LABELS: Record<string, string> = {
+  etb:             'Elite Trainer Box (ETB)',
+  blister:         'Blister',
+  puszka_tin:      'Puszka Tin',
+  puszka_mini_tin: 'Puszka Mini Tin',
+  pokeball_tin:    'Pokeball Tin',
+}
+
 const SHOE_LEVEL_LABELS: Record<string, string> = {
   amatorski:        'Amatorski',
   półprofesjonalny: 'Półprofesjonalny',
@@ -129,13 +137,19 @@ export async function generateDescription(
   if (itemMeta?.brand)  knownFacts.push(`Marka: ${itemMeta.brand}`)
   if (itemMeta?.size)   knownFacts.push(`Rozmiar: ${itemMeta.size}`)
 
-  // Pokemon: parse title for card number and set
+  // Pokemon cards: parse title for card number and set
   if (itemMeta?.category === 'Karty Pokemon' && itemMeta.title) {
     const parsed = parsePokemonTitle(itemMeta.title)
     if (parsed.pokemonName)  knownFacts.push(`Nazwa Pokemona: ${parsed.pokemonName}`)
     if (parsed.cardNumber)   knownFacts.push(`Numer karty: ${parsed.cardNumber}`)
     if (parsed.setCode)      knownFacts.push(`Skrót serii: ${parsed.setCode}`)
     if (parsed.setName)      knownFacts.push(`Pełna nazwa serii: ${parsed.setName}`)
+  }
+
+  // Pokemon boxes: include box type from metadata
+  if (itemMeta?.category === 'Boxy Pokemon' && itemMeta.metadata?.box_type) {
+    const label = BOX_TYPE_LABELS[itemMeta.metadata.box_type] ?? itemMeta.metadata.box_type
+    knownFacts.push(`Rodzaj boxa: ${label}`)
   }
 
   const factsSection = knownFacts.length

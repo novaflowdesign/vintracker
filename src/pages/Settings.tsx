@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { LogOut, Download, Upload, Trash2, Sun, Moon, Eye, EyeOff, Plus, Pencil } from 'lucide-react'
 import { getGeminiKey, setGeminiKey } from '../lib/gemini'
-import { getTemplates, addTemplate, updateTemplate, deleteTemplate, type Template } from '../lib/templates'
+import { useTemplates, useCreateTemplate, useUpdateTemplate, useDeleteTemplate, type Template } from '../lib/templates'
 import clsx from 'clsx'
 import { useTheme } from '../context/ThemeContext'
 import { toast } from 'sonner'
@@ -72,7 +72,10 @@ function TemplateForm({
 function GeneratorCard() {
   const [keyInput,  setKeyInput]  = useState(getGeminiKey)
   const [showKey,   setShowKey]   = useState(false)
-  const [templates, setTemplates] = useState<Template[]>(getTemplates)
+  const { data: templates = [] }  = useTemplates()
+  const createTemplate            = useCreateTemplate()
+  const updateTemplateMut         = useUpdateTemplate()
+  const deleteTemplateMut         = useDeleteTemplate()
   const [editId,    setEditId]    = useState<string | null>(null)
   const [formData,  setFormData]  = useState<FormData>({ name: '', titleTemplate: '', descTemplate: '' })
 
@@ -91,23 +94,29 @@ function GeneratorCard() {
     setFormData({ name: t.name, titleTemplate: t.titleTemplate, descTemplate: t.descTemplate })
   }
 
-  function saveForm() {
+  async function saveForm() {
     if (!formData.name.trim() || !formData.titleTemplate.trim()) {
       toast.error('Nazwa i szablon tytułu są wymagane')
       return
     }
-    if (editId === 'new') {
-      addTemplate(formData)
-    } else if (editId) {
-      updateTemplate(editId, formData)
+    try {
+      if (editId === 'new') {
+        await createTemplate.mutateAsync(formData)
+      } else if (editId) {
+        await updateTemplateMut.mutateAsync({ id: editId, patch: formData })
+      }
+      setEditId(null)
+    } catch {
+      toast.error('Błąd zapisu szablonu')
     }
-    setTemplates(getTemplates())
-    setEditId(null)
   }
 
-  function removeTemplate(id: string) {
-    deleteTemplate(id)
-    setTemplates(getTemplates())
+  async function removeTemplate(id: string) {
+    try {
+      await deleteTemplateMut.mutateAsync(id)
+    } catch {
+      toast.error('Błąd usuwania szablonu')
+    }
   }
 
   return (

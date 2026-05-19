@@ -19,6 +19,13 @@ const SHOE_TYPE_OPTIONS = [
   { value: 'mixy',    label: 'Mixy (SG)' },
   { value: 'halówki', label: 'Halówki (IC)' },
 ]
+const BOX_TYPE_OPTIONS = [
+  { value: 'etb',             label: 'Elite Trainer Box (ETB)' },
+  { value: 'blister',         label: 'Blister' },
+  { value: 'puszka_tin',      label: 'Puszka Tin' },
+  { value: 'puszka_mini_tin', label: 'Puszka Mini Tin' },
+  { value: 'pokeball_tin',    label: 'Pokeball Tin' },
+]
 
 interface Props {
   form: UseFormReturn<ItemFormData>
@@ -32,9 +39,10 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
     formState: { errors },
   } = form
 
-  const category = watch('category')
-  const showSize = category === 'Buty piłkarskie'
-  const isShoes  = category === 'Buty piłkarskie'
+  const category  = watch('category')
+  const showSize  = category === 'Buty piłkarskie'
+  const isShoes   = category === 'Buty piłkarskie'
+  const isPokebox = category === 'Boxy Pokemon'
 
   return (
     <div className="space-y-4">
@@ -124,6 +132,20 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
               {...register('meta_shoe_type')}
             />
           </div>
+        </div>
+      )}
+
+      {/* Boxy Pokemon — rodzaj boxa */}
+      {isPokebox && (
+        <div className="space-y-3 p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-200 dark:border-yellow-800">
+          <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">Boxy Pokemon</p>
+          <Select
+            label="Rodzaj boxa"
+            placeholder="— wybierz —"
+            options={BOX_TYPE_OPTIONS}
+            error={errors.meta_box_type?.message}
+            {...register('meta_box_type')}
+          />
         </div>
       )}
     </div>

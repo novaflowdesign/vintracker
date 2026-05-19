@@ -68,7 +68,8 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         received_date:   item.received_date ?? '',
         purchase_source: item.purchase_source ?? '',
         meta_shoe_level: item.metadata?.shoe_level ?? '',
-        meta_shoe_type:  item.metadata?.shoe_type ?? '',
+        meta_shoe_type:  item.metadata?.shoe_type  ?? '',
+        meta_box_type:   item.metadata?.box_type   ?? '',
         notes:           item.notes ?? '',
       })
       setPhotoFile(null)
@@ -131,6 +132,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
     const meta: Record<string, string> = {}
     if (data.meta_shoe_level) meta.shoe_level = data.meta_shoe_level
     if (data.meta_shoe_type)  meta.shoe_type  = data.meta_shoe_type
+    if (data.meta_box_type)   meta.box_type   = data.meta_box_type
     return Object.keys(meta).length ? meta : null
   }
 
@@ -145,7 +147,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         photoPatch = { photo_path: path }
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, ...formData } = data
+      const { meta_shoe_level, meta_shoe_type, meta_box_type, ...formData } = data
       await updateItem.mutateAsync({
         id: item.id,
         patch: {
