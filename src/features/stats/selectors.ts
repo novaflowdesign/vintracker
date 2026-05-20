@@ -72,13 +72,19 @@ export function currentQuarterRevenue(items: Item[]): number {
 
 // ── inventory ────────────────────────────────────────────────────────────────
 
+function isInWarehouse(item: Item): boolean {
+  if (item.status !== 'IN_STOCK') return false
+  if (!item.received_date) return false
+  return new Date(item.received_date) <= new Date()
+}
+
 export function inventoryCount(items: Item[]): number {
-  return items.filter(i => i.status === 'IN_STOCK').length
+  return items.filter(isInWarehouse).length
 }
 
 export function inventoryValue(items: Item[]): number {
   return items
-    .filter(i => i.status === 'IN_STOCK')
+    .filter(isInWarehouse)
     .reduce((s, i) => s + Number(i.purchase_price), 0)
 }
 
@@ -114,7 +120,7 @@ export function inventoryByCategory(
   items: Item[],
 ): { category: string; count: number }[] {
   const map = new Map<string, number>()
-  for (const i of items.filter(i => i.status === 'IN_STOCK')) {
+  for (const i of items.filter(isInWarehouse)) {
     const cat = i.category ?? 'Inne'
     map.set(cat, (map.get(cat) ?? 0) + 1)
   }
@@ -163,7 +169,7 @@ export function topProfitableSales(items: Item[], n = 5): Item[] {
 
 export function topShelfWarmers(items: Item[], n = 5): Item[] {
   return items
-    .filter(i => i.status === 'IN_STOCK')
+    .filter(isInWarehouse)
     .sort((a, b) => daysOnShelf(b) - daysOnShelf(a))
     .slice(0, n)
 }
