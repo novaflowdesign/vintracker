@@ -17,7 +17,7 @@ export type NewItemInput = {
   metadata?: Record<string, string> | null
 }
 
-export type SortOrder = 'newest' | 'oldest' | 'price_desc'
+export type SortOrder = 'newest' | 'oldest' | 'price_desc' | 'price_asc'
 
 export async function listItems(filters?: {
   status?: ItemStatus
@@ -32,9 +32,10 @@ export async function listItems(filters?: {
   if (filters?.search?.trim()) q = q.ilike('title', `%${filters.search.trim()}%`)
 
   const sort = filters?.sort ?? 'newest'
-  if (sort === 'oldest')         q = q.order('created_at', { ascending: true })
+  if      (sort === 'oldest')     q = q.order('created_at',     { ascending: true  })
   else if (sort === 'price_desc') q = q.order('purchase_price', { ascending: false })
-  else                            q = q.order('created_at', { ascending: false })
+  else if (sort === 'price_asc')  q = q.order('purchase_price', { ascending: true  })
+  else                            q = q.order('created_at',     { ascending: false })
 
   const { data, error } = await q
   if (error) throw new Error(`Błąd pobierania: ${error.message}`)

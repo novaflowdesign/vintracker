@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* Settings sheet slide-up */
 @keyframes sheet-slide-up {
   from { transform: translateY(100%); }
