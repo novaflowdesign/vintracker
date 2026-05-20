@@ -82,9 +82,10 @@ function makeDraft(idx: number): BundleItemDraft {
   }
 }
 
-// ── shared select/input class helpers ─────────────────────────────────────────
+// ── shared class helpers ──────────────────────────────────────────────────────
 
-const fieldCls = 'rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition appearance-none w-full'
+const selectCls = 'w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition'
+const inputCls  = 'w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition'
 
 // ── component ─────────────────────────────────────────────────────────────────
 
@@ -396,14 +397,14 @@ export default function AddItem() {
               {/* Per-item rows */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
-                <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
                   {bundleItems.map((item, i) => {
                     const isShoes   = item.category === 'Buty piłkarskie'
                     const isPokebox = item.category === 'Boxy Pokemon'
                     const isSlab    = item.category === 'Slab Pokemon'
                     const grade     = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
                     return (
-                      <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-2">
+                      <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-3">
 
                         {/* row 1: number · photo · analyze · title */}
                         <div className="flex items-center gap-2">
@@ -437,20 +438,26 @@ export default function AddItem() {
                             value={item.title}
                             onChange={e => updateItem_(item.id, { title: e.target.value })}
                             placeholder={`Przedmiot ${i + 1}`}
-                            className="flex-1 min-w-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                            className={`flex-1 min-w-0 ${inputCls}`}
                           />
                         </div>
 
-                        {/* row 2: category · price */}
-                        <div className="flex gap-2 pl-7">
+                        {/* row 2: category (full width) */}
+                        <div className="pl-7">
+                          <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Kategoria</label>
                           <select
                             value={item.category}
                             onChange={e => updateItem_(item.id, { category: e.target.value })}
-                            className={`flex-1 min-w-0 ${fieldCls}`}
+                            className={selectCls}
                           >
                             {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                           </select>
-                          <div className="relative shrink-0">
+                        </div>
+
+                        {/* row 3: price */}
+                        <div className="pl-7">
+                          <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Cena</label>
+                          <div className="relative">
                             <input
                               type="number"
                               min="0"
@@ -458,35 +465,47 @@ export default function AddItem() {
                               value={item.price}
                               onChange={e => updateItem_(item.id, { price: e.target.value })}
                               placeholder="0.00"
-                              className="w-24 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 pr-7 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                              className={`${inputCls} pr-10`}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
                           </div>
                         </div>
 
                         {/* Buty piłkarskie — rozmiar + poziom + typ */}
                         {isShoes && (
-                          <div className="pl-7 flex gap-2">
-                            <input
-                              type="text"
-                              value={item.size}
-                              onChange={e => updateItem_(item.id, { size: e.target.value })}
-                              placeholder="Rozmiar"
-                              className="w-20 shrink-0 rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                            />
-                            <select value={item.meta_shoe_level} onChange={e => updateItem_(item.id, { meta_shoe_level: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
-                              {SHOE_LEVEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </select>
-                            <select value={item.meta_shoe_type} onChange={e => updateItem_(item.id, { meta_shoe_type: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
-                              {SHOE_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </select>
+                          <div className="pl-7 space-y-2">
+                            <div className="flex gap-2">
+                              <div className="w-24 shrink-0">
+                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rozmiar</label>
+                                <input
+                                  type="text"
+                                  value={item.size}
+                                  onChange={e => updateItem_(item.id, { size: e.target.value })}
+                                  placeholder="42"
+                                  className={inputCls}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Poziom</label>
+                                <select value={item.meta_shoe_level} onChange={e => updateItem_(item.id, { meta_shoe_level: e.target.value })} className={selectCls}>
+                                  {SHOE_LEVEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Typ</label>
+                                <select value={item.meta_shoe_type} onChange={e => updateItem_(item.id, { meta_shoe_type: e.target.value })} className={selectCls}>
+                                  {SHOE_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                              </div>
+                            </div>
                           </div>
                         )}
 
                         {/* Boxy Pokemon — rodzaj boxa */}
                         {isPokebox && (
                           <div className="pl-7">
-                            <select value={item.meta_box_type} onChange={e => updateItem_(item.id, { meta_box_type: e.target.value })} className={fieldCls}>
+                            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rodzaj boxa</label>
+                            <select value={item.meta_box_type} onChange={e => updateItem_(item.id, { meta_box_type: e.target.value })} className={selectCls}>
                               {BOX_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                           </div>
@@ -494,26 +513,32 @@ export default function AddItem() {
 
                         {/* Slab Pokemon — firma + ocena */}
                         {isSlab && (
-                          <div className="pl-7 flex items-center gap-2">
-                            <select value={item.meta_slab_company} onChange={e => updateItem_(item.id, { meta_slab_company: e.target.value })} className={`flex-1 min-w-0 ${fieldCls}`}>
-                              {SLAB_COMPANY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </select>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => stepGrade(item.id, -0.5)}
-                                disabled={grade <= 1}
-                                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-base font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                              >−</button>
-                              <span className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">
-                                {grade % 1 === 0 ? grade.toFixed(0) : grade.toFixed(1)}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => stepGrade(item.id, +0.5)}
-                                disabled={grade >= 10}
-                                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-base font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                              >+</button>
+                          <div className="pl-7 space-y-2">
+                            <div>
+                              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Firma gradingowa</label>
+                              <select value={item.meta_slab_company} onChange={e => updateItem_(item.id, { meta_slab_company: e.target.value })} className={selectCls}>
+                                {SLAB_COMPANY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Ocena</label>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => stepGrade(item.id, -0.5)}
+                                  disabled={grade <= 1}
+                                  className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >−</button>
+                                <span className="w-12 text-center text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+                                  {grade % 1 === 0 ? grade.toFixed(0) : grade.toFixed(1)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => stepGrade(item.id, +0.5)}
+                                  disabled={grade >= 10}
+                                  className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >+</button>
+                              </div>
                             </div>
                           </div>
                         )}
