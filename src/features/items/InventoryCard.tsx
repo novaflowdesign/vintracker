@@ -12,7 +12,7 @@ import type { Item } from '../../types/item'
 // ── delivery status helpers ───────────────────────────────────────────────────
 
 function inDelivery(item: Item): boolean {
-  if (!item.received_date) return false
+  if (!item.received_date) return true
   return new Date(item.received_date) > new Date()
 }
 
@@ -395,7 +395,7 @@ function BundleCard({
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
               {delivering
-                ? <>Zakup: {formatDate(item.purchase_date)} · dostawa: {formatDate(item.received_date!)}</>
+                ? <>Zakup: {formatDate(item.purchase_date)}{item.received_date ? <> · dostawa: {formatDate(item.received_date)}</> : null}</>
                 : <>{formatDate(item.received_date ?? item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.</>
               }
             </p>
