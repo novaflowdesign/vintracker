@@ -229,7 +229,7 @@ export async function analyzeCardPhoto(image: File | string): Promise<{ title: s
   const prompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
 1. Card name — printed in the top-left area.
    - English card: return the name exactly as printed (e.g. "Pikachu ex", "Charizard VMAX").
-   - Japanese card: read the Japanese name and return the OFFICIAL ENGLISH Pokémon name (e.g. ピカチュウ → "Pikachu", リザードン → "Charizard", ゲッコウガ → "Greninja"). Also include the card type suffix if visible (e.g. "ex", "V", "VMAX", "VSTAR", "GX").
+   - Japanese card: read ONLY the largest main title text near the top of the card — that is the Pokémon's name. IGNORE the small circular pre-evolution icon in the top-left corner (進化前); it shows a different Pokémon and must not be used. Translate the main name to the OFFICIAL ENGLISH Pokémon name (e.g. ピカチュウ → "Pikachu", リザードン → "Charizard", ゲッコウガ → "Greninja"). Include the card type suffix if visible next to the main name (e.g. "ex", "V", "VMAX", "VSTAR", "GX").
 2. Set code — found in the bottom-left corner.
    - English cards: 2–4 uppercase letters (e.g. "SVI", "MEW", "MEG"). Ignore any language suffix such as EN, DE, FR, ES printed right after the code — return ONLY the code without the suffix.
    - Japanese cards: mixed letters and digits, often starting with "sv" (e.g. "sv1S", "sv3", "sv10", "sv4a"). Return the code exactly as printed, preserving case and digits.
