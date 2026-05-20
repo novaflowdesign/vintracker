@@ -26,6 +26,15 @@
 | POR | Perfect Order |
 | CRI | Chaos Rising |
 
+## Promo / specjalne (angielskie)
+
+| Skrót | Pełna nazwa |
+|-------|-------------|
+| SVP | Scarlet & Violet Black Star Promos |
+| MEP | Mega Evolution Black Star Promos |
+| SVE | Scarlet & Violet Energies |
+| MEE | Mega Evolution Energies |
+
 ## Wersje japońskie
 
 | Skrót | Pełna nazwa |
@@ -61,3 +70,5 @@
 | M2a | Mega Dream ex |
 | M3 | Nihil Zero |
 | M4 | Ninja Spinner |
+
+
