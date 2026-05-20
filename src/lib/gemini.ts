@@ -226,71 +226,50 @@ export async function analyzeCardPhoto(image: File | string): Promise<{ title: s
     base64 = await blobToBase64(compressed)
   }
 
-  // ── Step 1: OCR — read raw text exactly as printed, no translation ──────────
-  const ocrPrompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
-1. Card name — the LARGE main title text near the top of the card (it sits next to the HP value, e.g. "230HP"). Read the characters EXACTLY as printed — do NOT translate, do NOT guess. If the card is Japanese, return the Japanese characters as-is (katakana/kanji). Ignore the small circular pre-evolution thumbnail on the left side of the header entirely.
-2. Set code — bottom-left corner.
-   - English cards: 2–4 uppercase letters (e.g. "SVI", "MEW"). Strip any language suffix (EN, DE, FR, ES) — return ONLY the code.
-   - Japanese cards: mixed letters and digits starting with lowercase "sv" or "M" + digit (e.g. "sv1S", "sv9a", "M2a"). Return exactly as printed.
-3. Card number — bottom-left corner, format NNN/NNN (e.g. "025/198").
+  const prompt = `Look at this Pokemon TCG card photo. Extract exactly three values:
+1. Card name — printed in the top area (e.g. "Pikachu ex", "Charizard VMAX"). For Japanese cards return an empty string "".
+2. Set code — found in the bottom-left corner.
+   - English cards: 2–4 uppercase letters (e.g. "SVI", "MEW", "MEG"). Ignore any language suffix such as EN, DE, FR, ES printed right after the code — return ONLY the code without the suffix.
+   - Japanese cards: mixed letters and digits, often starting with "sv" (e.g. "sv1S", "sv3", "sv10", "sv4a"). Return the code exactly as printed, preserving case and digits.
+3. Card number — bottom-left corner, format NNN/NNN (e.g. "025/198")
 
 Reply with ONLY valid JSON, no extra text:
 {"cardName":"...","setCode":"...","cardNumber":"..."}`
 
-  const res1 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: [
         { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
-        { type: 'text', text: ocrPrompt },
+        { type: 'text', text: prompt },
       ]}],
       temperature: 0,
       max_tokens: 128,
     }),
   })
 
-  if (!res1.ok) {
-    const err = await res1.json().catch(() => ({}))
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
     const msg = (err as { error?: { message?: string } })?.error?.message
-    if (res1.status === 401) throw new Error(`Nieprawidłowy klucz API (401): ${msg ?? ''}`)
-    throw new Error(msg ?? `Błąd API (${res1.status})`)
+    if (res.status === 401) throw new Error(`Nieprawidłowy klucz API (401): ${msg ?? ''}`)
+    throw new Error(msg ?? `Błąd API (${res.status})`)
   }
 
-  const data1  = await res1.json()
-  const text1  = (data1.choices?.[0]?.message?.content ?? '') as string
-  const clean1 = text1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-  const parsed = JSON.parse(clean1) as { cardName?: string | null; setCode?: string | null; cardNumber?: string | null }
+  const data  = await res.json()
+  const text  = (data.choices?.[0]?.message?.content ?? '') as string
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+  const parsed = JSON.parse(clean) as { cardName?: string | null; setCode?: string | null; cardNumber?: string | null }
 
-  let cardName      = parsed.cardName   ?? ''
-  const setCode     = parsed.setCode    ?? ''
-  const cardNumber  = parsed.cardNumber ?? ''
-
-  // ── Step 2: translate Japanese name via text-only call ───────────────────────
+  const setCode    = parsed.setCode    ?? ''
+  const cardNumber = parsed.cardNumber ?? ''
   const isJapanese = /[a-z]/.test(setCode) || /^M\d/.test(setCode)
-  if (isJapanese && cardName) {
-    const translatePrompt = `You are a Pokémon TCG expert. Translate this Japanese Pokémon card name to the official English name: "${cardName}". Include the card type suffix (ex, V, VMAX, VSTAR, GX, etc.) only if it appears in the original. Reply with ONLY the English name, nothing else.`
 
-    const res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: [{ role: 'user', content: translatePrompt }],
-        temperature: 0,
-        max_tokens: 64,
-      }),
-    })
+  const parts = isJapanese
+    ? [setCode, cardNumber].filter(Boolean)
+    : [parsed.cardName, setCode, cardNumber].filter(Boolean)
 
-    if (res2.ok) {
-      const data2      = await res2.json()
-      const translated = ((data2.choices?.[0]?.message?.content ?? '') as string).trim()
-      if (translated) cardName = translated
-    }
-  }
-
-  const parts = [cardName, setCode, cardNumber].filter(Boolean)
   if (!parts.length) throw new Error('Nie udało się odczytać danych z karty')
   return { title: parts.join(' ') }
 }
