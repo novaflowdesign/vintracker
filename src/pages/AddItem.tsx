@@ -399,10 +399,11 @@ export default function AddItem() {
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
                 <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
                   {bundleItems.map((item, i) => {
-                    const isShoes   = item.category === 'Buty piłkarskie'
-                    const isPokebox = item.category === 'Boxy Pokemon'
-                    const isSlab    = item.category === 'Slab Pokemon'
-                    const grade     = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
+                    const isShoes      = item.category === 'Buty piłkarskie'
+                    const isPokebox    = item.category === 'Boxy Pokemon'
+                    const isSlab       = item.category === 'Slab Pokemon'
+                    const canAnalyze   = (item.category === 'Karty Pokemon' || isSlab) && !!getGeminiKey()
+                    const grade        = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
                     return (
                       <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-3">
 
@@ -419,10 +420,10 @@ export default function AddItem() {
                               : <ImagePlus size={14} className="text-gray-400 dark:text-slate-500" />
                             }
                           </button>
-                          {item.photoFile && getGeminiKey() && (
+                          {canAnalyze && (
                             <button
                               type="button"
-                              disabled={item.analyzing}
+                              disabled={item.analyzing || !item.photoFile}
                               onClick={() => analyzeItemPhoto(item.id)}
                               className="shrink-0 p-2 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-40 transition-colors"
                               title="Analizuj zdjęcie"
