@@ -79,7 +79,7 @@ function generateShoeDescriptionDirect(meta: {
   const level  = SHOE_LEVEL_LABELS[meta.metadata?.shoe_level ?? ''] ?? meta.metadata?.shoe_level ?? '[Poziom buta]'
   const type   = SHOE_TYPE_LABELS[meta.metadata?.shoe_type  ?? ''] ?? meta.metadata?.shoe_type  ?? '[Typ buta]'
 
-  const description = `${title}
+  const description = `Buty piłkarskie ${title}
 
 📏 Rozmiar buta: ${size}
 
@@ -93,7 +93,7 @@ function generateShoeDescriptionDirect(meta: {
 
 #butypiłkarskie #korki #korkipiłkarskie #nikeair #nikemercurial #nikesuperfly #niketiempo #nikephantom #nikevapor #nikemagista #adidasf50 #adidaspredator #adidascopa #footballshoes #kopacky #fodboldstovler #cipo`
 
-  return { title, description }
+  return { title: `Buty piłkarskie ${title} Rozmiar ${size}`, description }
 }
 
 const POKEMON_HASHTAGS = '#pokemon #pokemontcg #kartypokemon #zestawkartpokemon #pokemonpolska #pokemonpsa #pokemonpsa10 #pokemonbox #pokemonetb #pokemonbooster #pokemonboosterbox #pokemoncollection #pokemoncards #pokemonkort'
