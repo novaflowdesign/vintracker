@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.svg'],
       manifest: {
-        name: 'Vinted Tracker',
-        short_name: 'Vinted',
+        name: 'Vintracker',
+        short_name: 'Vintracker',
         description: 'Tracker zakupów i sprzedaży na Vinted z monitorowaniem limitu działalności nierejestrowanej',
         theme_color: '#0f172a',
         background_color: '#0f172a',
