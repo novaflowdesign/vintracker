@@ -142,7 +142,7 @@ export default function AddItem() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
   const watchedCategory = form.watch('category')
-  const canAnalyze = !!photoFile && !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
+  const canAnalyze = !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
 
   useEffect(() => {
     if (isBundle) form.setValue('purchase_price', 0)
@@ -585,8 +585,8 @@ export default function AddItem() {
               {/* Photo picker */}
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
-                {photoPreview ? (
-                  <div className="flex items-end gap-3">
+                <div className="flex items-end gap-3">
+                  {photoPreview ? (
                     <div className="relative w-40 h-40 rounded-xl overflow-hidden shrink-0">
                       <img src={photoPreview} alt="" className="w-full h-full object-cover" />
                       <button
@@ -597,33 +597,33 @@ export default function AddItem() {
                         <X size={14} />
                       </button>
                     </div>
-                    {canAnalyze && (
-                      <button
-                        type="button"
-                        onClick={analyzePhoto}
-                        disabled={analyzing}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
-                      >
-                        {analyzing
-                          ? <><Loader2 size={14} className="animate-spin" /> Analizuję…</>
-                          : <><Sparkles size={14} /> Analizuj</>
-                        }
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
-                    <ImagePlus size={28} className="text-gray-400 dark:text-slate-500" />
-                    <span className="text-xs text-gray-400 dark:text-slate-500 mt-2">Dodaj zdjęcie</span>
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePhotoChange}
-                    />
-                  </label>
-                )}
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
+                      <ImagePlus size={28} className="text-gray-400 dark:text-slate-500" />
+                      <span className="text-xs text-gray-400 dark:text-slate-500 mt-2">Dodaj zdjęcie</span>
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                      />
+                    </label>
+                  )}
+                  {canAnalyze && (
+                    <button
+                      type="button"
+                      onClick={analyzePhoto}
+                      disabled={analyzing || !photoFile}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                    >
+                      {analyzing
+                        ? <><Loader2 size={14} className="animate-spin" /> Analizuję…</>
+                        : <><Sparkles size={14} /> Analizuj</>
+                      }
+                    </button>
+                  )}
+                </div>
               </div>
 
               <ItemFormFields form={form} />
