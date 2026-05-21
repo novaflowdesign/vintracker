@@ -12,7 +12,7 @@ import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items
 import { uploadPhoto } from '../features/items/api'
 import type { BundleChildInput } from '../features/items/api'
 import { CATEGORIES } from '../lib/constants'
-import { analyzeCardPhoto, getGeminiKey } from '../lib/gemini'
+import { analyzeCardPhoto } from '../lib/gemini'
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
@@ -142,7 +142,7 @@ export default function AddItem() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
   const watchedCategory = form.watch('category')
-  const canAnalyze = !!getGeminiKey() && ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
+  const canAnalyze = ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
 
   useEffect(() => {
     if (isBundle) form.setValue('purchase_price', 0)
@@ -402,7 +402,7 @@ export default function AddItem() {
                     const isShoes      = item.category === 'Buty piłkarskie'
                     const isPokebox    = item.category === 'Boxy Pokemon'
                     const isSlab       = item.category === 'Slab Pokemon'
-                    const canAnalyze   = (item.category === 'Karty Pokemon' || isSlab) && !!getGeminiKey()
+                    const canAnalyze   = item.category === 'Karty Pokemon' || isSlab
                     const grade        = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
                     return (
                       <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-3">
