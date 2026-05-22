@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './hooks/useAuth'
@@ -11,10 +12,26 @@ import Sales from './pages/Sales'
 import Settings from './pages/Settings'
 import Opisy from './pages/Opisy'
 
+function ToasterPositioned() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const h = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', h)
+    return () => mq.removeEventListener('change', h)
+  }, [])
+
+  return isDesktop
+    ? <Toaster richColors position="top-center"    duration={3000} offset="calc(env(safe-area-inset-top) + 0.5rem)" />
+    : <Toaster richColors position="bottom-center" duration={3000} offset="calc(4rem + env(safe-area-inset-bottom) + 0.75rem)" />
+}
+
 export default function App() {
   return (
     <>
-    <Toaster richColors position="top-center" duration={3000} offset="calc(env(safe-area-inset-top) + 0.5rem)" />
+    <ToasterPositioned />
     <BrowserRouter basename="/vintracker">
       <AuthProvider>
         <Routes>

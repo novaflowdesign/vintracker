@@ -96,6 +96,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         purchase_source: item.purchase_source ?? '',
         meta_shoe_level:   item.metadata?.shoe_level   ?? '',
         meta_shoe_type:    item.metadata?.shoe_type    ?? '',
+        meta_shoe_style:   item.metadata?.shoe_style   ?? '',
         meta_box_type:     item.metadata?.box_type     ?? '',
         meta_slab_company: item.metadata?.slab_company ?? '',
         meta_slab_grade:   item.metadata?.slab_grade   ?? '',
@@ -161,6 +162,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
     const meta: Record<string, string> = {}
     if (data.meta_shoe_level)   meta.shoe_level   = data.meta_shoe_level
     if (data.meta_shoe_type)    meta.shoe_type    = data.meta_shoe_type
+    if (data.meta_shoe_style)   meta.shoe_style   = data.meta_shoe_style
     if (data.meta_box_type)     meta.box_type     = data.meta_box_type
     if (data.meta_slab_company) meta.slab_company = data.meta_slab_company
     if (data.meta_slab_grade)   meta.slab_grade   = data.meta_slab_grade
@@ -178,7 +180,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         photoPatch = { photo_path: path }
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
+      const { meta_shoe_level, meta_shoe_type, meta_shoe_style, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
       await updateItem.mutateAsync({
         id: item.id,
         patch: {
