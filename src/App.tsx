@@ -14,7 +14,7 @@ import Opisy from './pages/Opisy'
 export default function App() {
   return (
     <>
-    <Toaster richColors position="bottom-center" duration={3000} offset="calc(4rem + env(safe-area-inset-bottom) + 0.75rem)" />
+    <Toaster richColors position="bottom-center" duration={3000} />
     <BrowserRouter basename="/vintracker">
       <AuthProvider>
         <Routes>

@@ -57,7 +57,15 @@
   to   { transform: scaleX(0); }
 }
 
-/* Desktop: move toasts to top */
+/* Mobile: toast above bottom nav bar */
+@media (max-width: 767px) {
+  [data-sonner-toaster] {
+    bottom: calc(4rem + env(safe-area-inset-bottom) + 0.75rem) !important;
+    top: auto !important;
+  }
+}
+
+/* Desktop: toast at top */
 @media (min-width: 768px) {
   [data-sonner-toaster] {
     top: calc(env(safe-area-inset-top) + 0.5rem) !important;
