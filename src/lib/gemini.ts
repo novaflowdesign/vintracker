@@ -55,6 +55,14 @@ const BOX_TYPE_LABELS: Record<string, string> = {
   pokeball_tin:    'Pokeball Tin',
 }
 
+const SHOE_STYLE_LABELS: Record<string, string> = {
+  mokasyny:  'Mokasyny',
+  sneakersy: 'Sneakersy',
+  klapki:    'Klapki',
+  półbuty:   'Półbuty',
+  botki:     'Botki',
+}
+
 const SHOE_LEVEL_LABELS: Record<string, string> = {
   amatorski:        'Amatorski',
   półprofesjonalny: 'Półprofesjonalny',
@@ -94,6 +102,32 @@ function generateShoeDescriptionDirect(meta: {
 #butypiłkarskie #korki #korkipiłkarskie #nikeair #nikemercurial #nikesuperfly #niketiempo #nikephantom #nikevapor #nikemagista #adidasf50 #adidaspredator #adidascopa #footballshoes #kopacky #fodboldstovler #cipo`
 
   return { title: `Buty piłkarskie ${title} Rozmiar ${size}`, description }
+}
+
+function generateRegularShoeDescriptionDirect(meta: {
+  title?: string
+  size?: string | null
+  brand?: string | null
+  metadata?: Record<string, string> | null
+}): { title: string; description: string } {
+  const title  = meta.title  ?? '[Tytuł z magazynu]'
+  const size   = meta.size   ?? '[Rozmiar]'
+  const brand  = meta.brand  ?? '[Marka buta]'
+  const style  = SHOE_STYLE_LABELS[meta.metadata?.shoe_style ?? ''] ?? meta.metadata?.shoe_style ?? '[Rodzaj buta]'
+
+  const description = `Buty ${title}
+
+📏 Rozmiar: ${size}
+
+👟 Rodzaj: ${style}
+
+✅ Oryginalne buty ${brand}
+
+🚚 Wysyłka: InPost – dobrze zabezpieczona
+
+#buty #shoes #sneakers #mokasyny #botki #półbuty #klapki #secondhand #vintage`
+
+  return { title: `Buty ${title} Rozmiar ${size}`, description }
 }
 
 const POKEMON_HASHTAGS = '#pokemon #pokemontcg #kartypokemon #zestawkartpokemon #pokemonpolska #pokemonpsa #pokemonpsa10 #pokemonbox #pokemonetb #pokemonbooster #pokemonboosterbox #pokemoncollection #pokemoncards #pokemonkort'
@@ -298,6 +332,7 @@ export async function generateDescription(
   },
 ): Promise<{ title: string; description: string }> {
   if (itemMeta?.category === 'Buty piłkarskie')  return generateShoeDescriptionDirect(itemMeta)
+  if (itemMeta?.category === 'Buty')             return generateRegularShoeDescriptionDirect(itemMeta)
   if (itemMeta?.category === 'Karty Pokemon')    return generatePokemonCardDescriptionDirect(itemMeta)
   if (itemMeta?.category === 'Boxy Pokemon')     return generatePokemonBoxDescriptionDirect(itemMeta)
   if (itemMeta?.category === 'Slab Pokemon')     return generateSlabDescriptionDirect(itemMeta)

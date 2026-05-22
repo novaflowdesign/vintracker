@@ -1,5 +1,6 @@
 export const CATEGORIES = [
   'Buty piłkarskie',
+  'Buty',
   'Karty Pokemon',
   'Boxy Pokemon',
   'Slab Pokemon',

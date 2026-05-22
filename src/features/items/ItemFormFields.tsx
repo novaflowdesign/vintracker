@@ -20,6 +20,13 @@ const SHOE_TYPE_OPTIONS = [
   { value: 'mixy',    label: 'Mixy (SG)' },
   { value: 'halówki', label: 'Halówki (IC)' },
 ]
+const SHOE_STYLE_OPTIONS = [
+  { value: 'mokasyny',  label: 'Mokasyny' },
+  { value: 'sneakersy', label: 'Sneakersy' },
+  { value: 'klapki',    label: 'Klapki' },
+  { value: 'półbuty',   label: 'Półbuty' },
+  { value: 'botki',     label: 'Botki' },
+]
 const BOX_TYPE_OPTIONS = [
   { value: 'etb',             label: 'Elite Trainer Box (ETB)' },
   { value: 'blister',         label: 'Blister' },
@@ -47,11 +54,12 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
     formState: { errors },
   } = form
 
-  const category  = watch('category')
-  const showSize  = category === 'Buty piłkarskie'
-  const isShoes   = category === 'Buty piłkarskie'
-  const isPokebox = category === 'Boxy Pokemon'
-  const isSlab    = category === 'Slab Pokemon'
+  const category        = watch('category')
+  const showSize        = category === 'Buty piłkarskie' || category === 'Buty'
+  const isShoes         = category === 'Buty piłkarskie'
+  const isRegularShoes  = category === 'Buty'
+  const isPokebox       = category === 'Boxy Pokemon'
+  const isSlab          = category === 'Slab Pokemon'
 
   const gradeRaw = watch('meta_slab_grade')
   const grade    = gradeRaw !== undefined && gradeRaw !== '' ? parseFloat(gradeRaw) : 10
@@ -156,6 +164,20 @@ export default function ItemFormFields({ form, priceLabelOverride }: Props) {
               {...register('meta_shoe_type')}
             />
           </div>
+        </div>
+      )}
+
+      {/* Buty — rodzaj buta */}
+      {isRegularShoes && (
+        <div className="space-y-3 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
+          <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">Buty</p>
+          <Select
+            label="Rodzaj buta"
+            placeholder="— wybierz —"
+            options={SHOE_STYLE_OPTIONS}
+            error={errors.meta_shoe_style?.message}
+            {...register('meta_shoe_style')}
+          />
         </div>
       )}
 

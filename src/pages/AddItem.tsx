@@ -29,6 +29,14 @@ const SHOE_TYPE_OPTIONS = [
   { value: 'mixy',    label: 'Mixy (SG)' },
   { value: 'halówki', label: 'Halówki (IC)' },
 ]
+const SHOE_STYLE_OPTIONS = [
+  { value: '',          label: '— rodzaj —' },
+  { value: 'mokasyny',  label: 'Mokasyny' },
+  { value: 'sneakersy', label: 'Sneakersy' },
+  { value: 'klapki',    label: 'Klapki' },
+  { value: 'półbuty',   label: 'Półbuty' },
+  { value: 'botki',     label: 'Botki' },
+]
 const BOX_TYPE_OPTIONS = [
   { value: '',                label: '— rodzaj —' },
   { value: 'etb',             label: 'Elite Trainer Box (ETB)' },
@@ -56,6 +64,7 @@ type BundleItemDraft = {
   size: string
   meta_shoe_level: string
   meta_shoe_type: string
+  meta_shoe_style: string
   meta_box_type: string
   meta_slab_company: string
   meta_slab_grade: string
@@ -73,6 +82,7 @@ function makeDraft(idx: number): BundleItemDraft {
     size: '',
     meta_shoe_level: '',
     meta_shoe_type: '',
+    meta_shoe_style: '',
     meta_box_type: '',
     meta_slab_company: '',
     meta_slab_grade: '10',
@@ -229,18 +239,20 @@ export default function AddItem() {
       const meta: Record<string, string> = {}
       if (data.meta_shoe_level)   meta.shoe_level   = data.meta_shoe_level
       if (data.meta_shoe_type)    meta.shoe_type     = data.meta_shoe_type
+      if (data.meta_shoe_style)   meta.shoe_style    = data.meta_shoe_style
       if (data.meta_box_type)     meta.box_type      = data.meta_box_type
       if (data.meta_slab_company) meta.slab_company  = data.meta_slab_company
       if (data.meta_slab_grade)   meta.slab_grade    = data.meta_slab_grade
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
+      const { meta_shoe_level, meta_shoe_type, meta_shoe_style, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
 
       if (isBundle) {
         const childInputs: BundleChildInput[] = bundleItems.map((item, i) => {
           const childMeta: Record<string, string> = {}
           if (item.meta_shoe_level)   childMeta.shoe_level   = item.meta_shoe_level
           if (item.meta_shoe_type)    childMeta.shoe_type    = item.meta_shoe_type
+          if (item.meta_shoe_style)   childMeta.shoe_style   = item.meta_shoe_style
           if (item.meta_box_type)     childMeta.box_type     = item.meta_box_type
           if (item.meta_slab_company) childMeta.slab_company = item.meta_slab_company
           if (item.meta_slab_grade)   childMeta.slab_grade   = item.meta_slab_grade
@@ -399,8 +411,9 @@ export default function AddItem() {
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
                 <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
                   {bundleItems.map((item, i) => {
-                    const isShoes      = item.category === 'Buty piłkarskie'
-                    const isPokebox    = item.category === 'Boxy Pokemon'
+                    const isShoes         = item.category === 'Buty piłkarskie'
+                    const isRegularShoes  = item.category === 'Buty'
+                    const isPokebox       = item.category === 'Boxy Pokemon'
                     const isSlab       = item.category === 'Slab Pokemon'
                     const canAnalyze   = item.category === 'Karty Pokemon' || isSlab
                     const grade        = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
@@ -496,6 +509,30 @@ export default function AddItem() {
                                 <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Typ</label>
                                 <select value={item.meta_shoe_type} onChange={e => updateItem_(item.id, { meta_shoe_type: e.target.value })} className={selectCls}>
                                   {SHOE_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Buty — rozmiar + rodzaj buta */}
+                        {isRegularShoes && (
+                          <div className="pl-7 space-y-2">
+                            <div className="flex gap-2">
+                              <div className="w-24 shrink-0">
+                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rozmiar</label>
+                                <input
+                                  type="text"
+                                  value={item.size}
+                                  onChange={e => updateItem_(item.id, { size: e.target.value })}
+                                  placeholder="42"
+                                  className={inputCls}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rodzaj buta</label>
+                                <select value={item.meta_shoe_style} onChange={e => updateItem_(item.id, { meta_shoe_style: e.target.value })} className={selectCls}>
+                                  {SHOE_STYLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                 </select>
                               </div>
                             </div>

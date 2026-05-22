@@ -15,6 +15,7 @@ export const itemSchema = z.object({
   // category-specific metadata (shoes only — card data parsed from title)
   meta_shoe_level:    z.string().optional(),
   meta_shoe_type:     z.string().optional(),
+  meta_shoe_style:    z.string().optional(),
   meta_box_type:      z.string().optional(),
   meta_slab_company:  z.string().optional(),
   meta_slab_grade:    z.string().optional(),

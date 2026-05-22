@@ -73,9 +73,7 @@ export function currentQuarterRevenue(items: Item[]): number {
 // ── inventory ────────────────────────────────────────────────────────────────
 
 function isInWarehouse(item: Item): boolean {
-  if (item.status !== 'IN_STOCK') return false
-  if (!item.received_date) return false
-  return new Date(item.received_date) <= new Date()
+  return item.status === 'IN_STOCK'
 }
 
 export function inventoryCount(items: Item[]): number {

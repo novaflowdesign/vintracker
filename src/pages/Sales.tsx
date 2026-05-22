@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Download, Package, X, Search, ChevronDown } from 'lucide-react'
+import { Download, Package, X, Search, ChevronDown, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
-import { useItems, useAllSoldBundleChildren, usePhotoUrl } from '../features/items/queries'
+import { toast } from 'sonner'
+import { useItems, useAllSoldBundleChildren, usePhotoUrl, useDeleteItem } from '../features/items/queries'
 import { itemProfit } from '../features/stats/selectors'
 import { getCurrentQuarter, getQuarterRange } from '../lib/legal'
 import { formatCurrency, formatDate } from '../utils/format'
@@ -142,7 +143,7 @@ function MiniPhoto({ path }: { path: string | null }) {
 
 // ── regular sale card (mobile) ────────────────────────────────────────────────
 
-function SaleCard({ item }: { item: Item }) {
+function SaleCard({ item, onDelete }: { item: Item; onDelete?: () => void }) {
   const profit = itemProfit(item)
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4">
@@ -152,11 +153,18 @@ function SaleCard({ item }: { item: Item }) {
           <p className="font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
           <p className="text-xs text-slate-400 dark:text-slate-500">{item.category ?? ''}</p>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(Number(item.sale_price))}</p>
-          <p className={`text-xs font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
-          </p>
+        <div className="flex items-start gap-2 shrink-0">
+          <div className="text-right">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(Number(item.sale_price))}</p>
+            <p className={`text-xs font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
+            </p>
+          </div>
+          {onDelete && (
+            <button onClick={onDelete} className="mt-0.5 text-slate-300 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-400 transition-colors">
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
       </div>
       <div className="flex justify-between mt-2 text-xs text-slate-400 dark:text-slate-500">
@@ -169,7 +177,7 @@ function SaleCard({ item }: { item: Item }) {
 
 // ── bundle sale card (mobile) ─────────────────────────────────────────────────
 
-function BundleSaleCard({ entry }: { entry: BundleEntry }) {
+function BundleSaleCard({ entry, onDeleteChild }: { entry: BundleEntry; onDeleteChild?: (item: Item) => void }) {
   const [expanded, setExpanded] = useState(false)
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden">
@@ -221,11 +229,18 @@ function BundleSaleCard({ entry }: { entry: BundleEntry }) {
                     {child.sale_date ? formatDate(child.sale_date) : '—'} · Zakup: {formatCurrency(Number(child.purchase_price))}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(Number(child.sale_price))}</p>
-                  <p className={`text-xs font-medium ${p >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {p >= 0 ? '+' : ''}{formatCurrency(p)}
-                  </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(Number(child.sale_price))}</p>
+                    <p className={`text-xs font-medium ${p >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {p >= 0 ? '+' : ''}{formatCurrency(p)}
+                    </p>
+                  </div>
+                  {onDeleteChild && (
+                    <button onClick={() => onDeleteChild(child)} className="text-slate-300 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-400 transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -238,7 +253,7 @@ function BundleSaleCard({ entry }: { entry: BundleEntry }) {
 
 // ── regular table row (desktop) ───────────────────────────────────────────────
 
-function SaleTableRow({ item }: { item: Item }) {
+function SaleTableRow({ item, onDelete }: { item: Item; onDelete?: () => void }) {
   const profit = itemProfit(item)
   const margin = Number(item.sale_price) > 0 ? (profit / Number(item.sale_price)) * 100 : 0
   return (
@@ -260,10 +275,19 @@ function SaleTableRow({ item }: { item: Item }) {
         <p className="text-xs text-slate-400 dark:text-slate-500">{formatCurrency(Number(item.purchase_price))}</p>
       </td>
       <td className="py-3 text-sm text-right whitespace-nowrap">
-        <p className={`font-semibold ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
-        </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500">{margin.toFixed(1)} %</p>
+        <div className="flex items-center justify-end gap-2">
+          <div>
+            <p className={`font-semibold ${profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {profit >= 0 ? '+' : ''}{formatCurrency(profit)}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{margin.toFixed(1)} %</p>
+          </div>
+          {onDelete && (
+            <button onClick={onDelete} className="text-slate-300 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-400 transition-colors p-1">
+              <Trash2 size={15} />
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   )
@@ -271,7 +295,7 @@ function SaleTableRow({ item }: { item: Item }) {
 
 // ── bundle table rows (desktop) ───────────────────────────────────────────────
 
-function BundleTableRows({ entry }: { entry: BundleEntry }) {
+function BundleTableRows({ entry, onDeleteChild }: { entry: BundleEntry; onDeleteChild?: (item: Item) => void }) {
   const [expanded, setExpanded] = useState(false)
   const margin = entry.revenue > 0 ? (entry.profit / entry.revenue) * 100 : 0
   return (
@@ -337,11 +361,20 @@ function BundleTableRows({ entry }: { entry: BundleEntry }) {
             <td className="py-2 pr-4 text-sm text-right whitespace-nowrap">
               <p className="font-medium dark:text-white">{formatCurrency(Number(child.sale_price))}</p>
             </td>
-            <td className="py-2 text-sm text-right whitespace-nowrap pr-9">
-              <p className={`font-semibold ${p >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {p >= 0 ? '+' : ''}{formatCurrency(p)}
-              </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">{m.toFixed(1)} %</p>
+            <td className="py-2 text-sm text-right whitespace-nowrap">
+              <div className="flex items-center justify-end gap-2">
+                <div>
+                  <p className={`font-semibold ${p >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {p >= 0 ? '+' : ''}{formatCurrency(p)}
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{m.toFixed(1)} %</p>
+                </div>
+                {onDeleteChild && (
+                  <button onClick={() => onDeleteChild(child)} className="text-slate-300 hover:text-rose-500 dark:text-slate-600 dark:hover:text-rose-400 transition-colors p-1">
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
             </td>
           </tr>
         )
@@ -356,6 +389,17 @@ export default function Sales() {
   const { data: allItems = [], isLoading: loadingItems } = useItems({})
   const { data: allSoldChildren = [], isLoading: loadingChildren } = useAllSoldBundleChildren()
   const isLoading = loadingItems || loadingChildren
+  const deleteItem = useDeleteItem()
+
+  async function handleDeleteItem(item: Item) {
+    if (!window.confirm(`Usunąć "${item.title}" z historii sprzedaży? Tej operacji nie można cofnąć.`)) return
+    try {
+      await deleteItem.mutateAsync(item.id)
+      toast.success('Usunięto z historii sprzedaży')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Wystąpił błąd')
+    }
+  }
 
   const { from: qFrom } = getCurrentQuarter()
   const [dateFrom, setDateFrom] = useState(qFrom.toISOString().slice(0, 10))
@@ -511,8 +555,8 @@ export default function Sales() {
           <div className="md:hidden space-y-3">
             {entries.map((entry, i) =>
               entry.type === 'regular'
-                ? <SaleCard key={entry.item.id} item={entry.item} />
-                : <BundleSaleCard key={`bundle-${entry.parent.id}-${i}`} entry={entry} />
+                ? <SaleCard key={entry.item.id} item={entry.item} onDelete={() => handleDeleteItem(entry.item)} />
+                : <BundleSaleCard key={`bundle-${entry.parent.id}-${i}`} entry={entry} onDeleteChild={handleDeleteItem} />
             )}
           </div>
 
@@ -530,8 +574,8 @@ export default function Sales() {
               <tbody>
                 {entries.map((entry, i) =>
                   entry.type === 'regular'
-                    ? <SaleTableRow key={entry.item.id} item={entry.item} />
-                    : <BundleTableRows key={`bundle-${entry.parent.id}-${i}`} entry={entry} />
+                    ? <SaleTableRow key={entry.item.id} item={entry.item} onDelete={() => handleDeleteItem(entry.item)} />
+                    : <BundleTableRows key={`bundle-${entry.parent.id}-${i}`} entry={entry} onDeleteChild={handleDeleteItem} />
                 )}
               </tbody>
             </table>
