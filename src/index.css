@@ -56,3 +56,11 @@
   from { transform: scaleX(1); }
   to   { transform: scaleX(0); }
 }
+
+/* Desktop: move toasts to top */
+@media (min-width: 768px) {
+  [data-sonner-toaster] {
+    top: calc(env(safe-area-inset-top) + 0.5rem) !important;
+    bottom: auto !important;
+  }
+}
