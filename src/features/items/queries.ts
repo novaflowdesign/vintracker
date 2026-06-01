@@ -90,6 +90,9 @@ export function useUpdateItem() {
     onSuccess: item => {
       invalidateItems(qc)
       invalidateBundleChildren(qc, item.bundle_id)
+      if (item.photo_path) {
+        qc.invalidateQueries({ queryKey: ['photo', item.photo_path] })
+      }
     },
   })
 }

@@ -42,6 +42,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const { data: existingPhotoUrl } = usePhotoUrl(item?.photo_path ?? null)
 
   // bundle children editing
   const isBundle = item?.bundle_size != null && item?.bundle_id == null
@@ -238,6 +239,13 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         {/* Parent photo */}
         <div>
           <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Zdjęcie</p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
           {photoPreview ? (
             <div className="relative w-32 h-32 rounded-xl overflow-hidden">
               <img src={photoPreview} alt="" className="w-full h-full object-cover" />
@@ -249,24 +257,26 @@ export default function EditItemModal({ item, open, onClose }: Props) {
                 <X size={14} />
               </button>
             </div>
+          ) : existingPhotoUrl ? (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="relative w-32 h-32 rounded-xl overflow-hidden group cursor-pointer"
+            >
+              <img src={existingPhotoUrl} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium transition-opacity">Zmień</span>
+              </div>
+            </button>
           ) : (
-            <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors">
-              {item?.photo_path ? (
-                <span className="text-xs text-gray-400 dark:text-slate-500 text-center px-2">Kliknij, aby zmienić zdjęcie</span>
-              ) : (
-                <>
-                  <ImagePlus size={24} className="text-gray-400 dark:text-slate-500" />
-                  <span className="text-xs text-gray-400 dark:text-slate-500 mt-1">Dodaj zdjęcie</span>
-                </>
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-            </label>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+            >
+              <ImagePlus size={24} className="text-gray-400 dark:text-slate-500" />
+              <span className="text-xs text-gray-400 dark:text-slate-500 mt-1">Dodaj zdjęcie</span>
+            </button>
           )}
         </div>
 

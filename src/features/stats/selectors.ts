@@ -70,6 +70,11 @@ export function currentQuarterRevenue(items: Item[]): number {
   return totalRevenue(items, { from, to })
 }
 
+export function currentQuarterProfit(items: Item[]): number {
+  const { from, to } = getCurrentQuarter()
+  return totalProfit(items, { from, to })
+}
+
 // ── inventory ────────────────────────────────────────────────────────────────
 
 function isInWarehouse(item: Item): boolean {

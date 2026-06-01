@@ -19,13 +19,12 @@ import QuarterBarChartCard from '../components/charts/QuarterBarChartCard'
 import BarChartCard from '../components/charts/BarChartCard'
 import DonutChartCard from '../components/charts/DonutChartCard'
 import {
-  mtdRevenue,
-  mtdProfit,
   averageMargin,
   inventoryCount,
   inventoryValue,
   averageDaysOnShelf,
   currentQuarterRevenue,
+  currentQuarterProfit,
   profitByCategory,
   inventoryByCategory,
   cumulativeQuarterSeries,
@@ -135,8 +134,8 @@ export default function Dashboard() {
   const remaining  = QUARTERLY_LIMIT_PLN - qRevenue
 
   const kpis = [
-    { label: 'Sprzedaż',          value: formatCurrency(mtdRevenue(salesItems)),      icon: <CalendarDays size={18} /> },
-    { label: 'Zysk',              value: formatCurrency(mtdProfit(salesItems)),        icon: <TrendingUp size={18} /> },
+    { label: 'Sprzedaż (kwartał)', value: formatCurrency(qRevenue),                   icon: <CalendarDays size={18} /> },
+    { label: 'Zysk (kwartał)',    value: formatCurrency(currentQuarterProfit(salesItems)), icon: <TrendingUp size={18} /> },
     { label: 'Średnia marża',     value: `${averageMargin(items).toFixed(1)} %`,       icon: <Percent size={18} /> },
     { label: 'Sztuk w magazynie', value: String(inventoryCount(items)),                icon: <Package size={18} /> },
     { label: 'Wartość magazynu',  value: formatCurrency(inventoryValue(items)),        icon: <Warehouse size={18} /> },
