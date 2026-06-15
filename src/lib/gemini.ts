@@ -45,7 +45,7 @@ export function getAllGeneratedDescs(): Record<string, GeneratedDesc> {
 }
 import { parsePokemonTitle } from './pokemonSets'
 
-// ── Direct description generators (no AI) ────────────────────────────────────
+// ── Direct description generators (template-based) ────────────────────────────
 
 const BOX_TYPE_LABELS: Record<string, string> = {
   etb:             'Elite Trainer Box (ETB)',
@@ -75,150 +75,49 @@ const SHOE_TYPE_LABELS: Record<string, string> = {
   halówki:  'Halówki (IC)',
 }
 
-function generateShoeDescriptionDirect(meta: {
+function fillTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `[${key}]`)
+}
+
+function buildDirectVars(meta: {
   title?: string
+  category?: string | null
   size?: string | null
   brand?: string | null
   metadata?: Record<string, string> | null
-}): { title: string; description: string } {
-  const title  = meta.title  ?? '[Tytuł z magazynu]'
-  const size   = meta.size   ?? '[Rozmiar]'
-  const brand  = meta.brand  ?? '[Marka buta]'
-  const level  = SHOE_LEVEL_LABELS[meta.metadata?.shoe_level ?? ''] ?? meta.metadata?.shoe_level ?? '[Poziom buta]'
-  const type   = SHOE_TYPE_LABELS[meta.metadata?.shoe_type  ?? ''] ?? meta.metadata?.shoe_type  ?? '[Typ buta]'
+}): Record<string, string> {
+  const category = meta.category ?? ''
+  const vars: Record<string, string> = {
+    title: meta.title ?? '[Tytuł z magazynu]',
+    size:  meta.size  ?? '[Rozmiar]',
+    brand: meta.brand ?? '[Marka]',
+  }
 
-  const description = `Buty piłkarskie ${title}
+  if (category === 'Buty piłkarskie') {
+    vars.level = SHOE_LEVEL_LABELS[meta.metadata?.shoe_level ?? ''] ?? meta.metadata?.shoe_level ?? '[Poziom buta]'
+    vars.type  = SHOE_TYPE_LABELS[meta.metadata?.shoe_type  ?? ''] ?? meta.metadata?.shoe_type  ?? '[Typ buta]'
+  }
+  if (category === 'Buty') {
+    vars.style = SHOE_STYLE_LABELS[meta.metadata?.shoe_style ?? ''] ?? meta.metadata?.shoe_style ?? '[Rodzaj buta]'
+  }
+  if (category === 'Karty Pokemon' || category === 'Slab Pokemon') {
+    const parsed    = parsePokemonTitle(meta.title ?? '')
+    vars.setCode    = parsed.setCode    ?? ''
+    vars.setName    = parsed.setName    ?? parsed.setCode ?? ''
+    vars.cardNumber = parsed.cardNumber ?? '[Numer karty]'
+  }
+  if (category === 'Boxy Pokemon') {
+    vars.boxType = BOX_TYPE_LABELS[meta.metadata?.box_type ?? ''] ?? meta.metadata?.box_type ?? '[Rodzaj boxa]'
+  }
+  if (category === 'Slab Pokemon') {
+    vars.slabCompany = meta.metadata?.slab_company ?? 'PSA'
+    vars.slabGrade   = meta.metadata?.slab_grade   ?? '?'
+  }
 
-📏 Rozmiar buta: ${size}
-
-👟 Rodzaj: ${level}
-
-⚽️ Typ: ${type}
-
-✅ Oryginalne buty ${brand}
-
-🚚 Wysyłka: InPost – dobrze zabezpieczona
-
-#butypiłkarskie #korki #korkipiłkarskie #nikeair #nikemercurial #nikesuperfly #niketiempo #nikephantom #nikevapor #nikemagista #adidasf50 #adidaspredator #adidascopa #footballshoes #kopacky #fodboldstovler #cipo`
-
-  return { title: `Buty piłkarskie ${title} Rozmiar ${size}`, description }
+  return vars
 }
 
-function generateRegularShoeDescriptionDirect(meta: {
-  title?: string
-  size?: string | null
-  brand?: string | null
-  metadata?: Record<string, string> | null
-}): { title: string; description: string } {
-  const title  = meta.title  ?? '[Tytuł z magazynu]'
-  const size   = meta.size   ?? '[Rozmiar]'
-  const brand  = meta.brand  ?? '[Marka buta]'
-  const style  = SHOE_STYLE_LABELS[meta.metadata?.shoe_style ?? ''] ?? meta.metadata?.shoe_style ?? '[Rodzaj buta]'
-
-  const description = `Buty ${title}
-
-📏 Rozmiar: ${size}
-
-👟 Rodzaj: ${style}
-
-✅ Oryginalne buty ${brand}
-
-🚚 Wysyłka: InPost – dobrze zabezpieczona
-
-#buty #shoes #sneakers #mokasyny #botki #półbuty #klapki #secondhand #vintage`
-
-  return { title: `Buty ${title} Rozmiar ${size}`, description }
-}
-
-const POKEMON_HASHTAGS = '#pokemon #pokemontcg #kartypokemon #zestawkartpokemon #pokemonpolska #pokemonpsa #pokemonpsa10 #pokemonbox #pokemonetb #pokemonbooster #pokemonboosterbox #pokemoncollection #pokemoncards #pokemonkort'
-
-function generatePokemonCardDescriptionDirect(meta: {
-  title?: string
-}): { title: string; description: string } {
-  const rawTitle  = meta.title ?? '[Tytuł z magazynu]'
-  const parsed    = parsePokemonTitle(rawTitle)
-  const setCode   = parsed.setCode ?? ''
-  const setName   = parsed.setName ?? setCode
-  const cardNum   = parsed.cardNumber ?? ''
-
-  const title = `Pokémon TCG – ${rawTitle}${setName ? ` ${setName}` : ''}`
-
-  const description = `✨ Pokémon TCG – ${rawTitle}
-
-🆔 Numer karty: ${setCode ? `${setCode} ` : ''}${cardNum || '[Numer karty]'}
-
-📅 Dodatek: ${setName || '[Nazwa dodatku]'}
-
-📦 Booster → Sleeve -> Toploader
-
-✅ Oryginalna karta Pokémon
-
-🚚 Wysyłka: InPost – dobrze zabezpieczona
-
-💰 Rabat przy zakupie kilku kart!
-
-${POKEMON_HASHTAGS}`
-
-  return { title, description }
-}
-
-function generatePokemonBoxDescriptionDirect(meta: {
-  title?: string
-  metadata?: Record<string, string> | null
-}): { title: string; description: string } {
-  const rawTitle = meta.title ?? '[Tytuł z magazynu]'
-  const boxType  = BOX_TYPE_LABELS[meta.metadata?.box_type ?? ''] ?? meta.metadata?.box_type ?? '[Rodzaj boxa]'
-
-  const title = `Pokémon TCG - ${rawTitle}`
-
-  const description = `✨ Pokémon TCG – ${rawTitle}
-
-📦 Rodzaj: ${boxType}
-
-✅ Oryginalny produkt Pokemon TCG – fabrycznie zapakowany
-
-🚚 Wysyłka: InPost – dobrze zabezpieczona
-
-💰 Rabat przy zakupie kilku rzeczy!
-
-${POKEMON_HASHTAGS}`
-
-  return { title, description }
-}
-
-function generateSlabDescriptionDirect(meta: {
-  title?: string
-  metadata?: Record<string, string> | null
-}): { title: string; description: string } {
-  const rawTitle = meta.title ?? '[Tytuł z magazynu]'
-  const company  = meta.metadata?.slab_company ?? 'PSA'
-  const grade    = meta.metadata?.slab_grade   ?? '?'
-
-  const parsed   = parsePokemonTitle(rawTitle)
-  const setCode  = parsed.setCode   ?? ''
-  const setName  = parsed.setName   ?? setCode
-  const cardNum  = parsed.cardNumber ?? ''
-
-  const title = `Pokémon TCG – ${rawTitle}`
-
-  const description = `✨ Pokémon TCG – ${rawTitle}
-
-🏆 Nota: ${company} ${grade}
-
-🆔 Numer karty: ${setCode ? `${setCode} ` : ''}${cardNum || '[Numer karty]'}
-
-📅 Dodatek: ${setName || '[Nazwa dodatku]'}
-
-✅ Oryginalny slab ${company}
-
-🚚 Wysyłka: InPost – dobrze zabezpieczona
-
-💰 Rabat przy zakupie kilku rzeczy!
-
-${POKEMON_HASHTAGS}`
-
-  return { title, description }
-}
+const DIRECT_CATEGORIES_SET = new Set(['Buty piłkarskie', 'Buty', 'Karty Pokemon', 'Boxy Pokemon', 'Slab Pokemon'])
 
 // ── Card photo analysis ───────────────────────────────────────────────────────
 
@@ -331,11 +230,13 @@ export async function generateDescription(
     brand?: string | null
   },
 ): Promise<{ title: string; description: string }> {
-  if (itemMeta?.category === 'Buty piłkarskie')  return generateShoeDescriptionDirect(itemMeta)
-  if (itemMeta?.category === 'Buty')             return generateRegularShoeDescriptionDirect(itemMeta)
-  if (itemMeta?.category === 'Karty Pokemon')    return generatePokemonCardDescriptionDirect(itemMeta)
-  if (itemMeta?.category === 'Boxy Pokemon')     return generatePokemonBoxDescriptionDirect(itemMeta)
-  if (itemMeta?.category === 'Slab Pokemon')     return generateSlabDescriptionDirect(itemMeta)
+  if (itemMeta?.category && DIRECT_CATEGORIES_SET.has(itemMeta.category)) {
+    const vars = buildDirectVars(itemMeta)
+    return {
+      title:       fillTemplate(titleTemplate, vars).replace(/\s+/g, ' ').trim(),
+      description: fillTemplate(descTemplate, vars),
+    }
+  }
 
   const apiKey = getGeminiKey()
   if (!apiKey) throw new Error('Brak klucza Groq API — skonfiguruj go w Ustawieniach.')
