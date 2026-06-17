@@ -138,7 +138,7 @@ export default function Dashboard() {
     { label: 'Zysk (kwartał)',    value: formatCurrency(currentQuarterProfit(salesItems)), icon: <TrendingUp size={18} /> },
     { label: 'Średnia marża',     value: `${averageMargin(items).toFixed(1)} %`,       icon: <Percent size={18} /> },
     { label: 'Sztuk w magazynie', value: String(inventoryCount(items)),                icon: <Package size={18} /> },
-    { label: 'Wartość magazynu',  value: formatCurrency(inventoryValue(items)),        icon: <Warehouse size={18} /> },
+    { label: 'Wartość magazynu',  value: formatCurrency(inventoryValue(items, allSoldChildren)), icon: <Warehouse size={18} /> },
     { label: 'Śr. czas w magazynie', value: `${averageDaysOnShelf(items)} dni`,        icon: <Clock size={18} /> },
   ]
 

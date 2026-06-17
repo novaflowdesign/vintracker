@@ -85,10 +85,23 @@ export function inventoryCount(items: Item[]): number {
   return items.filter(isInWarehouse).length
 }
 
-export function inventoryValue(items: Item[]): number {
-  return items
+export function inventoryValue(items: Item[], soldBundleChildren: Item[] = []): number {
+  const base = items
     .filter(isInWarehouse)
     .reduce((s, i) => s + Number(i.purchase_price), 0)
+
+  if (!soldBundleChildren.length) return base
+
+  // For partially-sold bundles the parent stays IN_STOCK with full purchase_price.
+  // Subtract sold children's purchase_price so the warehouse value reflects only unsold items.
+  const inStockBundleIds = new Set(
+    items.filter(i => i.bundle_size != null && i.status === 'IN_STOCK').map(i => i.id),
+  )
+  const adjustment = soldBundleChildren
+    .filter(c => inStockBundleIds.has(c.bundle_id!))
+    .reduce((s, i) => s + Number(i.purchase_price), 0)
+
+  return base - adjustment
 }
 
 export function averageDaysOnShelf(items: Item[], lastNDays = 90): number {
