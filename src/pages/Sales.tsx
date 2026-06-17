@@ -7,7 +7,7 @@ import { useItems, useAllSoldBundleChildren, usePhotoUrl, useDeleteItem } from '
 import { itemProfit } from '../features/stats/selectors'
 import { getCurrentQuarter, getQuarterRange } from '../lib/legal'
 import { formatCurrency, formatDate } from '../utils/format'
-import { CATEGORIES } from '../lib/constants'
+import { useCategories } from '../features/categories/queries'
 import type { Item } from '../types/item'
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -98,10 +98,6 @@ const QUARTER_OPTIONS = [
   { value: '2026-4', label: 'Q4 2026' },
 ]
 
-const CATEGORY_OPTIONS = [
-  { value: '', label: 'Wszystkie kategorie' },
-  ...CATEGORIES.map(c => ({ value: c, label: c })),
-]
 
 // ── mini thumbnail ────────────────────────────────────────────────────────────
 
@@ -388,8 +384,13 @@ function BundleTableRows({ entry, onDeleteChild }: { entry: BundleEntry; onDelet
 export default function Sales() {
   const { data: allItems = [], isLoading: loadingItems } = useItems({})
   const { data: allSoldChildren = [], isLoading: loadingChildren } = useAllSoldBundleChildren()
+  const { data: allCategories = [] } = useCategories()
   const isLoading = loadingItems || loadingChildren
   const deleteItem = useDeleteItem()
+  const categoryOptions = [
+    { value: '', label: 'Wszystkie kategorie' },
+    ...allCategories.map(c => ({ value: c.name, label: c.name })),
+  ]
 
   async function handleDeleteItem(item: Item) {
     if (!window.confirm(`Usunąć "${item.title}" z historii sprzedaży? Tej operacji nie można cofnąć.`)) return
@@ -521,7 +522,7 @@ export default function Sales() {
           className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         <select value={category} onChange={e => setCategory(e.target.value)}
           className="rounded-xl border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-          {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 

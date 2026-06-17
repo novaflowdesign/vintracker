@@ -12,6 +12,8 @@ import { uploadPhoto } from './api'
 import { analyzeCardPhoto, getGeminiKey } from '../../lib/gemini'
 import { supabase } from '../../lib/supabase'
 import type { Item } from '../../types/item'
+import { useCategories, useAllCategoryFields } from '../categories/queries'
+import { useMetadataState } from '../categories/DynamicMetaFields'
 
 // ── small component to display an existing child photo ────────────────────────
 
@@ -52,6 +54,13 @@ export default function EditItemModal({ item, open, onClose }: Props) {
   const [targetChildId, setTargetChildId] = useState<string | null>(null)
   const [analyzingChildId, setAnalyzingChildId] = useState<string | null>(null)
 
+  // categories + dynamic fields
+  const { data: allCategories = [] } = useCategories()
+  const allCategoryFields = useAllCategoryFields()
+  const categoryOptions = allCategories.map(c => ({ value: c.name, label: c.name }))
+
+  const { metadata, setField, reset: resetMeta, collect } = useMetadataState()
+
   const ANALYZABLE_CATEGORIES = ['Karty Pokemon', 'Slab Pokemon']
   const canAnalyzeChildren = isBundle && !!getGeminiKey() && ANALYZABLE_CATEGORIES.includes(item?.category ?? '')
 
@@ -81,7 +90,10 @@ export default function EditItemModal({ item, open, onClose }: Props) {
     resolver: zodResolver(itemSchema) as any,
   })
 
-  // reset parent form when modal opens
+  const selectedCategory = form.watch('category') ?? ''
+  const categoryFields = allCategoryFields[selectedCategory] ?? []
+
+  // reset form + metadata when modal opens
   useEffect(() => {
     if (open && item) {
       form.reset({
@@ -95,25 +107,21 @@ export default function EditItemModal({ item, open, onClose }: Props) {
         purchase_date:   item.purchase_date,
         received_date:   item.received_date ?? '',
         purchase_source: item.purchase_source ?? '',
-        meta_shoe_level:   item.metadata?.shoe_level   ?? '',
-        meta_shoe_type:    item.metadata?.shoe_type    ?? '',
-        meta_shoe_style:   item.metadata?.shoe_style   ?? '',
-        meta_box_type:     item.metadata?.box_type     ?? '',
-        meta_slab_company: item.metadata?.slab_company ?? '',
-        meta_slab_grade:   item.metadata?.slab_grade   ?? '',
         notes:           item.notes ?? '',
       })
+      resetMeta(Object.fromEntries(
+        Object.entries(item.metadata ?? {}).map(([k, v]) => [k, String(v)])
+      ))
       setPhotoFile(null)
       setPhotoPreview(null)
     }
     if (!open) {
-      // revoke any child previews
       setChildEdits(prev => {
         Object.values(prev).forEach(e => { if (e.photoPreview) URL.revokeObjectURL(e.photoPreview) })
         return {}
       })
     }
-  }, [open, item, form])
+  }, [open, item]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // initialise child edits when children load
   useEffect(() => {
@@ -159,33 +167,19 @@ export default function EditItemModal({ item, open, onClose }: Props) {
 
   // ── submit ────────────────────────────────────────────────────────────────
 
-  function buildMetadata(data: ItemFormData): Record<string, string> | null {
-    const meta: Record<string, string> = {}
-    if (data.meta_shoe_level)   meta.shoe_level   = data.meta_shoe_level
-    if (data.meta_shoe_type)    meta.shoe_type    = data.meta_shoe_type
-    if (data.meta_shoe_style)   meta.shoe_style   = data.meta_shoe_style
-    if (data.meta_box_type)     meta.box_type     = data.meta_box_type
-    if (data.meta_slab_company) meta.slab_company = data.meta_slab_company
-    if (data.meta_slab_grade)   meta.slab_grade   = data.meta_slab_grade
-    return Object.keys(meta).length ? meta : null
-  }
-
   async function onSubmit(data: ItemFormData) {
     if (!item) return
     setUploading(true)
     try {
-      // save parent
       let photoPatch: { photo_path?: string } = {}
       if (photoFile) {
         const path = await uploadPhoto(item.id, photoFile)
         photoPatch = { photo_path: path }
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, meta_shoe_style, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
       await updateItem.mutateAsync({
         id: item.id,
         patch: {
-          ...formData,
+          ...data,
           ...photoPatch,
           purchase_price:  Number(data.purchase_price),
           description:     data.description     || null,
@@ -196,7 +190,7 @@ export default function EditItemModal({ item, open, onClose }: Props) {
           purchase_source: (data.purchase_source || null) as Item['purchase_source'],
           received_date:   data.received_date   || null,
           notes:           data.notes           || null,
-          metadata:        buildMetadata(data),
+          metadata:        collect(),
         },
       })
 
@@ -280,7 +274,13 @@ export default function EditItemModal({ item, open, onClose }: Props) {
           )}
         </div>
 
-        <ItemFormFields form={form} />
+        <ItemFormFields
+          form={form}
+          categoryOptions={categoryOptions}
+          categoryFields={categoryFields}
+          metadata={metadata}
+          onMetaChange={setField}
+        />
 
         {/* Bundle children section */}
         {isBundle && children.length > 0 && (
@@ -338,7 +338,6 @@ export default function EditItemModal({ item, open, onClose }: Props) {
                 )
               })}
             </div>
-            {/* shared hidden file input for child photos */}
             <input
               ref={childFileRef}
               type="file"

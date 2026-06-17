@@ -7,7 +7,7 @@ import SellModal from '../features/items/SellModal'
 import EditItemModal from '../features/items/EditItemModal'
 import GroupSellModal from '../features/items/GroupSellModal'
 import { useItems, useDeleteItem } from '../features/items/queries'
-import { CATEGORIES } from '../lib/constants'
+import { useCategories } from '../features/categories/queries'
 import type { Item } from '../types/item'
 import type { SortOrder } from '../features/items/api'
 
@@ -27,6 +27,7 @@ const STATUS_OPTIONS: { value: DeliveryFilter; label: string; icon: React.ReactN
 ]
 
 export default function Inventory() {
+  const { data: allCategories = [] } = useCategories()
   const [search,         setSearch]         = useState('')
   const [category,       setCategory]       = useState('')
   const [sort,           setSort]           = useState<SortOrder>('newest')
@@ -165,18 +166,18 @@ export default function Inventory() {
             >
               Wszystkie
             </button>
-            {CATEGORIES.map(cat => (
+            {allCategories.map(cat => (
               <button
-                key={cat}
+                key={cat.id}
                 type="button"
-                onClick={() => setCategory(cat)}
+                onClick={() => setCategory(cat.name)}
                 className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                  category === cat
+                  category === cat.name
                     ? 'bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900'
                     : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:border-gray-400'
                 }`}
               >
-                {cat}
+                {cat.name}
               </button>
             ))}
           </div>

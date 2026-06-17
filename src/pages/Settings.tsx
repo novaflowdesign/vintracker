@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { LogOut, Download, Upload, Trash2, Sun, Moon, Eye, EyeOff, Plus, Pencil } from 'lucide-react'
+import { LogOut, Download, Upload, Trash2, Sun, Moon, Eye, EyeOff, Plus, Pencil, Tag } from 'lucide-react'
+import CategoryManager from '../features/categories/CategoryManager'
 import { getGeminiKey, setGeminiKey } from '../lib/gemini'
 import { useTemplates, useCreateTemplate, useUpdateTemplate, useDeleteTemplate, type Template } from '../lib/templates'
 import clsx from 'clsx'
@@ -385,6 +386,14 @@ export default function Settings() {
       </Card>
 
       <GeneratorCard />
+
+      <Card title="Kategorie">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4">
+          <Tag size={15} />
+          <span>Zarządzaj kategoriami i ich polami. Zmiany działają na żywo w formularzach.</span>
+        </div>
+        <CategoryManager />
+      </Card>
 
       <Card title="O aplikacji">
         <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1.5">

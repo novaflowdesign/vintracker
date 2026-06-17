@@ -11,50 +11,13 @@ import ItemFormFields from '../features/items/ItemFormFields'
 import { useCreateItem, useCreateBundle, useUpdateItem } from '../features/items/queries'
 import { uploadPhoto } from '../features/items/api'
 import type { BundleChildInput } from '../features/items/api'
-import { CATEGORIES } from '../lib/constants'
 import { analyzeCardPhoto } from '../lib/gemini'
+import { useCategories, useAllCategoryFields } from '../features/categories/queries'
+import { useMetadataState } from '../features/categories/DynamicMetaFields'
+import DynamicMetaFields from '../features/categories/DynamicMetaFields'
+import type { CategoryField } from '../types/category'
 
-// ── constants ─────────────────────────────────────────────────────────────────
-
-const SHOE_LEVEL_OPTIONS = [
-  { value: '',               label: '— poziom —' },
-  { value: 'amatorski',        label: 'Amatorski' },
-  { value: 'półprofesjonalny', label: 'Półprofesjonalny' },
-  { value: 'profesjonalny',    label: 'Profesjonalny' },
-]
-const SHOE_TYPE_OPTIONS = [
-  { value: '',        label: '— typ —' },
-  { value: 'lanki',   label: 'Lanki (FG)' },
-  { value: 'turfy',   label: 'Turfy (TF)' },
-  { value: 'mixy',    label: 'Mixy (SG)' },
-  { value: 'halówki', label: 'Halówki (IC)' },
-]
-const SHOE_STYLE_OPTIONS = [
-  { value: '',          label: '— rodzaj —' },
-  { value: 'mokasyny',  label: 'Mokasyny' },
-  { value: 'sneakersy', label: 'Sneakersy' },
-  { value: 'klapki',    label: 'Klapki' },
-  { value: 'półbuty',   label: 'Półbuty' },
-  { value: 'botki',     label: 'Botki' },
-]
-const BOX_TYPE_OPTIONS = [
-  { value: '',                label: '— rodzaj —' },
-  { value: 'etb',             label: 'Elite Trainer Box (ETB)' },
-  { value: 'blister',         label: 'Blister' },
-  { value: 'puszka_tin',      label: 'Puszka Tin' },
-  { value: 'puszka_mini_tin', label: 'Puszka Mini Tin' },
-  { value: 'pokeball_tin',    label: 'Pokeball Tin' },
-]
-const SLAB_COMPANY_OPTIONS = [
-  { value: '',    label: '— firma —' },
-  { value: 'PSA', label: 'PSA' },
-  { value: 'CGC', label: 'CGC' },
-  { value: 'ACE', label: 'ACE' },
-  { value: 'TAG', label: 'TAG' },
-]
-const categoryOptions = [{ value: '', label: '— kategoria —' }, ...CATEGORIES.map(c => ({ value: c, label: c }))]
-
-// ── per-item draft type ────────────────────────────────────────────────────────
+// ── per-item draft type ───────────────────────────────────────────────────────
 
 type BundleItemDraft = {
   id: string
@@ -62,12 +25,7 @@ type BundleItemDraft = {
   category: string
   price: string
   size: string
-  meta_shoe_level: string
-  meta_shoe_type: string
-  meta_shoe_style: string
-  meta_box_type: string
-  meta_slab_company: string
-  meta_slab_grade: string
+  metadata: Record<string, string>
   photoFile: File | null
   photoPreview: string | null
   analyzing: boolean
@@ -80,12 +38,7 @@ function makeDraft(idx: number): BundleItemDraft {
     category: '',
     price: '',
     size: '',
-    meta_shoe_level: '',
-    meta_shoe_type: '',
-    meta_shoe_style: '',
-    meta_box_type: '',
-    meta_slab_company: '',
-    meta_slab_grade: '10',
+    metadata: {},
     photoFile: null,
     photoPreview: null,
     analyzing: false,
@@ -97,6 +50,12 @@ function makeDraft(idx: number): BundleItemDraft {
 const selectCls = 'w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition'
 const inputCls  = 'w-full rounded-xl border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition'
 
+// ── helper: determine if size field should be shown for a category ─────────────
+
+function categoryShowsSize(fields: CategoryField[]): boolean {
+  return fields.some(f => f.key.includes('shoe'))
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 export default function AddItem() {
@@ -105,6 +64,14 @@ export default function AddItem() {
   const createItem = useCreateItem()
   const createBundle = useCreateBundle()
   const updateItem = useUpdateItem()
+
+  // ── categories ─────────────────────────────────────────────────────────────
+  const { data: allCategories = [] } = useCategories()
+  const allCategoryFields = useAllCategoryFields()
+  const categoryOptions = [
+    { value: '', label: '— kategoria —' },
+    ...allCategories.map(c => ({ value: c.name, label: c.name })),
+  ]
 
   // ── single-item photo ──────────────────────────────────────────────────────
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -151,8 +118,11 @@ export default function AddItem() {
   // ── form ───────────────────────────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ItemFormData, unknown, ItemFormData>({ resolver: zodResolver(itemSchema) as any })
-  const watchedCategory = form.watch('category')
-  const canAnalyze = ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory ?? '')
+  const watchedCategory = form.watch('category') ?? ''
+  const categoryFields = allCategoryFields[watchedCategory] ?? []
+  const canAnalyze = ['Karty Pokemon', 'Slab Pokemon'].includes(watchedCategory)
+
+  const { metadata, setField, collect } = useMetadataState()
 
   useEffect(() => {
     if (isBundle) form.setValue('purchase_price', 0)
@@ -200,16 +170,6 @@ export default function AddItem() {
     setBundleItems(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item))
   }
 
-  function stepGrade(id: string, delta: number) {
-    setBundleItems(prev => prev.map(item => {
-      if (item.id !== id) return item
-      const current = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
-      const next = Math.round((current + delta) * 2) / 2
-      if (next < 1 || next > 10) return item
-      return { ...item, meta_slab_grade: next.toString() }
-    }))
-  }
-
   function handleBundleItemPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !targetItemId) return
@@ -236,54 +196,33 @@ export default function AddItem() {
   async function onSubmit(data: ItemFormData) {
     setSubmitting(true)
     try {
-      const meta: Record<string, string> = {}
-      if (data.meta_shoe_level)   meta.shoe_level   = data.meta_shoe_level
-      if (data.meta_shoe_type)    meta.shoe_type     = data.meta_shoe_type
-      if (data.meta_shoe_style)   meta.shoe_style    = data.meta_shoe_style
-      if (data.meta_box_type)     meta.box_type      = data.meta_box_type
-      if (data.meta_slab_company) meta.slab_company  = data.meta_slab_company
-      if (data.meta_slab_grade)   meta.slab_grade    = data.meta_slab_grade
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { meta_shoe_level, meta_shoe_type, meta_shoe_style, meta_box_type, meta_slab_company, meta_slab_grade, ...formData } = data
-
       if (isBundle) {
-        const childInputs: BundleChildInput[] = bundleItems.map((item, i) => {
-          const childMeta: Record<string, string> = {}
-          if (item.meta_shoe_level)   childMeta.shoe_level   = item.meta_shoe_level
-          if (item.meta_shoe_type)    childMeta.shoe_type    = item.meta_shoe_type
-          if (item.meta_shoe_style)   childMeta.shoe_style   = item.meta_shoe_style
-          if (item.meta_box_type)     childMeta.box_type     = item.meta_box_type
-          if (item.meta_slab_company) childMeta.slab_company = item.meta_slab_company
-          if (item.meta_slab_grade)   childMeta.slab_grade   = item.meta_slab_grade
-          return {
-            title:          item.title.trim() || `Przedmiot ${i + 1}`,
-            category:       item.category || null,
-            purchase_price: parseFloat(item.price.replace(',', '.')) || 0,
-            size:           item.size || null,
-            metadata:       Object.keys(childMeta).length ? childMeta : null,
-          }
-        })
+        const childInputs: BundleChildInput[] = bundleItems.map((item, i) => ({
+          title:          item.title.trim() || `Przedmiot ${i + 1}`,
+          category:       item.category || null,
+          purchase_price: parseFloat(item.price.replace(',', '.')) || 0,
+          size:           item.size || null,
+          metadata:       Object.keys(item.metadata).length ? item.metadata : null,
+        }))
         const totalPrice = childInputs.reduce((s, c) => s + c.purchase_price, 0)
 
         const { parent, children } = await createBundle.mutateAsync({
           input: {
-            ...formData,
+            ...data,
             purchase_price:  totalPrice,
-            description:     formData.description     || null,
-            category:        formData.category        || null,
-            brand:           formData.brand           || null,
-            size:            formData.size            || null,
-            condition:       formData.condition       || null,
-            received_date:   formData.received_date   || null,
-            purchase_source: formData.purchase_source || null,
-            notes:           formData.notes           || null,
+            description:     data.description     || null,
+            category:        data.category        || null,
+            brand:           data.brand           || null,
+            size:            data.size            || null,
+            condition:       data.condition       || null,
+            received_date:   data.received_date   || null,
+            purchase_source: data.purchase_source || null,
+            notes:           data.notes           || null,
             metadata:        null,
           },
           childInputs,
         })
 
-        // upload per-item photos; first child's path becomes the bundle cover
         let parentPhotoPatch: string | null = null
         await Promise.all(children.map(async (child, i) => {
           const draft = bundleItems[i]
@@ -301,17 +240,17 @@ export default function AddItem() {
         toast.success(`Zestaw (${bundleSize} szt.) dodany do magazynu!`)
       } else {
         const input = {
-          ...formData,
+          ...data,
           purchase_price:  Number(data.purchase_price),
-          description:     formData.description     || null,
-          category:        formData.category        || null,
-          brand:           formData.brand           || null,
-          size:            formData.size            || null,
-          condition:       formData.condition       || null,
-          received_date:   formData.received_date   || null,
-          purchase_source: formData.purchase_source || null,
-          notes:           formData.notes           || null,
-          metadata:        Object.keys(meta).length ? meta : null,
+          description:     data.description     || null,
+          category:        data.category        || null,
+          brand:           data.brand           || null,
+          size:            data.size            || null,
+          condition:       data.condition       || null,
+          received_date:   data.received_date   || null,
+          purchase_source: data.purchase_source || null,
+          notes:           data.notes           || null,
+          metadata:        collect(),
         }
         const item = await createItem.mutateAsync(input)
         if (photoFile) {
@@ -361,7 +300,6 @@ export default function AddItem() {
             /* ── BUNDLE MODE ──────────────────────────────────────────────── */
             <div className="space-y-4">
 
-              {/* Bundle label */}
               <Input
                 label="Tytuł zestawu *"
                 placeholder="np. Scarlet & Violet booster pack"
@@ -411,12 +349,9 @@ export default function AddItem() {
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Przedmioty</p>
                 <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
                   {bundleItems.map((item, i) => {
-                    const isShoes         = item.category === 'Buty piłkarskie'
-                    const isRegularShoes  = item.category === 'Buty'
-                    const isPokebox       = item.category === 'Boxy Pokemon'
-                    const isSlab       = item.category === 'Slab Pokemon'
-                    const canAnalyze   = item.category === 'Karty Pokemon' || isSlab
-                    const grade        = item.meta_slab_grade ? parseFloat(item.meta_slab_grade) : 10
+                    const itemFields = allCategoryFields[item.category] ?? []
+                    const showSize = categoryShowsSize(itemFields)
+                    const canAnalyzeItem = item.category === 'Karty Pokemon' || item.category === 'Slab Pokemon'
                     return (
                       <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-3">
 
@@ -433,7 +368,7 @@ export default function AddItem() {
                               : <ImagePlus size={14} className="text-gray-400 dark:text-slate-500" />
                             }
                           </button>
-                          {canAnalyze && (
+                          {canAnalyzeItem && (
                             <button
                               type="button"
                               disabled={item.analyzing || !item.photoFile}
@@ -456,128 +391,59 @@ export default function AddItem() {
                           />
                         </div>
 
-                        {/* row 2: category (full width) */}
+                        {/* row 2: category */}
                         <div className="pl-7">
                           <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Kategoria</label>
                           <select
                             value={item.category}
-                            onChange={e => updateItem_(item.id, { category: e.target.value })}
+                            onChange={e => updateItem_(item.id, { category: e.target.value, metadata: {} })}
                             className={selectCls}
                           >
                             {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                           </select>
                         </div>
 
-                        {/* row 3: price */}
-                        <div className="pl-7">
-                          <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Cena</label>
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.price}
-                              onChange={e => updateItem_(item.id, { price: e.target.value })}
-                              placeholder="0.00"
-                              className={`${inputCls} pr-10`}
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
+                        {/* row 3: price + size */}
+                        <div className={`pl-7 ${showSize ? 'grid grid-cols-2 gap-2' : ''}`}>
+                          <div>
+                            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Cena</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.price}
+                                onChange={e => updateItem_(item.id, { price: e.target.value })}
+                                placeholder="0.00"
+                                className={`${inputCls} pr-10`}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-slate-500 pointer-events-none">zł</span>
+                            </div>
                           </div>
+                          {showSize && (
+                            <div>
+                              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rozmiar</label>
+                              <input
+                                type="text"
+                                value={item.size}
+                                onChange={e => updateItem_(item.id, { size: e.target.value })}
+                                placeholder="42"
+                                className={inputCls}
+                              />
+                            </div>
+                          )}
                         </div>
 
-                        {/* Buty piłkarskie — rozmiar + poziom + typ */}
-                        {isShoes && (
-                          <div className="pl-7 space-y-2">
-                            <div className="flex gap-2">
-                              <div className="w-24 shrink-0">
-                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rozmiar</label>
-                                <input
-                                  type="text"
-                                  value={item.size}
-                                  onChange={e => updateItem_(item.id, { size: e.target.value })}
-                                  placeholder="42"
-                                  className={inputCls}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Poziom</label>
-                                <select value={item.meta_shoe_level} onChange={e => updateItem_(item.id, { meta_shoe_level: e.target.value })} className={selectCls}>
-                                  {SHOE_LEVEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                </select>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Typ</label>
-                                <select value={item.meta_shoe_type} onChange={e => updateItem_(item.id, { meta_shoe_type: e.target.value })} className={selectCls}>
-                                  {SHOE_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Buty — rozmiar + rodzaj buta */}
-                        {isRegularShoes && (
-                          <div className="pl-7 space-y-2">
-                            <div className="flex gap-2">
-                              <div className="w-24 shrink-0">
-                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rozmiar</label>
-                                <input
-                                  type="text"
-                                  value={item.size}
-                                  onChange={e => updateItem_(item.id, { size: e.target.value })}
-                                  placeholder="42"
-                                  className={inputCls}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rodzaj buta</label>
-                                <select value={item.meta_shoe_style} onChange={e => updateItem_(item.id, { meta_shoe_style: e.target.value })} className={selectCls}>
-                                  {SHOE_STYLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Boxy Pokemon — rodzaj boxa */}
-                        {isPokebox && (
+                        {/* Dynamic category fields */}
+                        {itemFields.length > 0 && (
                           <div className="pl-7">
-                            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rodzaj boxa</label>
-                            <select value={item.meta_box_type} onChange={e => updateItem_(item.id, { meta_box_type: e.target.value })} className={selectCls}>
-                              {BOX_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                            </select>
-                          </div>
-                        )}
-
-                        {/* Slab Pokemon — firma + ocena */}
-                        {isSlab && (
-                          <div className="pl-7 space-y-2">
-                            <div>
-                              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Firma gradingowa</label>
-                              <select value={item.meta_slab_company} onChange={e => updateItem_(item.id, { meta_slab_company: e.target.value })} className={selectCls}>
-                                {SLAB_COMPANY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Ocena</label>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => stepGrade(item.id, -0.5)}
-                                  disabled={grade <= 1}
-                                  className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >−</button>
-                                <span className="w-12 text-center text-lg font-bold text-gray-900 dark:text-white tabular-nums">
-                                  {grade % 1 === 0 ? grade.toFixed(0) : grade.toFixed(1)}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => stepGrade(item.id, +0.5)}
-                                  disabled={grade >= 10}
-                                  className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-lg font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >+</button>
-                              </div>
-                            </div>
+                            <DynamicMetaFields
+                              fields={itemFields}
+                              values={item.metadata}
+                              onChange={(key, value) => updateItem_(item.id, {
+                                metadata: { ...item.metadata, [key]: value },
+                              })}
+                            />
                           </div>
                         )}
 
@@ -587,7 +453,6 @@ export default function AddItem() {
                 </div>
               </div>
 
-              {/* hidden file input for bundle item photos */}
               <input ref={bundleFileRef} type="file" accept="image/*" className="hidden" onChange={handleBundleItemPhotoChange} />
 
               {/* shared fields */}
@@ -663,7 +528,13 @@ export default function AddItem() {
                 </div>
               </div>
 
-              <ItemFormFields form={form} />
+              <ItemFormFields
+                form={form}
+                categoryOptions={categoryOptions}
+                categoryFields={categoryFields}
+                metadata={metadata}
+                onMetaChange={setField}
+              />
             </>
           )}
 
