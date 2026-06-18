@@ -42,7 +42,6 @@ function AddButton() {
         <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
       )}
 
-      {/* Menu — fixed, centered above nav */}
       {open && (
         <div
           className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2"
@@ -105,12 +104,34 @@ export default function Layout() {
   const { signOut } = useAuth()
 
   return (
-    <>
-    <div
-      className="fixed top-0 inset-x-0 z-50 bg-gray-50 dark:bg-slate-950 pointer-events-none"
-      style={{ height: 'env(safe-area-inset-top)' }}
-    />
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 md:flex" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 md:flex">
+
+      {/* Mobile top header */}
+      <header
+        className="md:hidden fixed top-0 inset-x-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          height: 'calc(3rem + env(safe-area-inset-top))',
+        }}
+      >
+        <Link to="/" className="flex items-center gap-2">
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" className="w-7 h-7 rounded-lg shrink-0" />
+          <span className="text-sm font-semibold text-slate-900 dark:text-white">Vintracker</span>
+        </Link>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            clsx(
+              'p-2 rounded-xl transition-colors',
+              isActive
+                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30'
+                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700',
+            )
+          }
+        >
+          <Settings size={20} />
+        </NavLink>
+      </header>
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 fixed inset-y-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 px-3 py-6">
@@ -153,7 +174,15 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-56 md:pb-0" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      <main
+        className="flex-1 md:ml-56 md:pb-0"
+        style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+      >
+        {/* Spacer compensating for fixed mobile header */}
+        <div
+          className="md:hidden"
+          style={{ height: 'calc(3rem + env(safe-area-inset-top))' }}
+        />
         <Outlet />
       </main>
 
@@ -175,6 +204,5 @@ export default function Layout() {
         </div>
       </nav>
     </div>
-    </>
   )
 }
