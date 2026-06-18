@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, Package, Copy, Check, RefreshCw, X, AlertCircle, Loader2, Layers, ChevronDown, RotateCcw } from 'lucide-react'
+import { FileText, Package, Copy, Check, RefreshCw, X, AlertCircle, Loader2, Layers, ChevronDown, RotateCcw, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useItems, usePhotoUrl, useBundleChildren } from '../features/items/queries'
 import { getGeminiKey, generateDescription, getGeneratedDesc, saveGeneratedDesc, getAllGeneratedDescs, type GeneratedDesc } from '../lib/gemini'
@@ -30,10 +30,12 @@ function GenerationModal({
   item,
   onClose,
   onSaved,
+  onBack,
 }: {
   item: Item
   onClose: () => void
   onSaved: (itemId: string, desc: GeneratedDesc) => void
+  onBack?: () => void
 }) {
   const { data: photoUrl } = usePhotoUrl(item.photo_path)
   const { data: templates = [] } = useTemplates()
@@ -174,10 +176,19 @@ function GenerationModal({
         'sm:rounded-2xl sm:shadow-2xl',
       ].join(' ')}>
 
-        {/* Handle (mobile only) + close */}
+        {/* Handle (mobile only) + nav */}
         <div className="flex justify-center pt-3 pb-1 shrink-0 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
         </div>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="absolute top-3 left-4 flex items-center gap-1.5 p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-xs font-medium"
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">Zestaw</span>
+          </button>
+        )}
         <button
           onClick={onClose}
           className="absolute top-3 right-4 p-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
@@ -433,6 +444,7 @@ export default function Opisy() {
   const { data: items = [], isLoading } = useItems({})
   const [selectedItem,   setSelectedItem]   = useState<Item | null>(null)
   const [selectedBundle, setSelectedBundle] = useState<Item | null>(null)
+  const [fromBundle,     setFromBundle]     = useState<Item | null>(null)
   const [generated, setGenerated] = useState<Record<string, GeneratedDesc>>(() => getAllGeneratedDescs())
 
   const itemsWithPhoto = items.filter(i => i.photo_path && i.status !== 'SOLD')
@@ -447,6 +459,26 @@ export default function Opisy() {
     } else {
       setSelectedItem(item)
     }
+  }
+
+  function handleSelectChild(child: Item) {
+    setFromBundle(selectedBundle)
+    setSelectedBundle(null)
+    setSelectedItem(child)
+  }
+
+  function handleCloseModal() {
+    setSelectedItem(null)
+    if (fromBundle) {
+      setSelectedBundle(fromBundle)
+      setFromBundle(null)
+    }
+  }
+
+  function handleBackToBundle() {
+    setSelectedItem(null)
+    setSelectedBundle(fromBundle)
+    setFromBundle(null)
   }
 
   if (isLoading) {
@@ -514,8 +546,9 @@ export default function Opisy() {
       {selectedItem && (
         <GenerationModal
           item={selectedItem}
-          onClose={() => setSelectedItem(null)}
+          onClose={handleCloseModal}
           onSaved={handleSaved}
+          onBack={fromBundle ? handleBackToBundle : undefined}
         />
       )}
 
@@ -524,7 +557,7 @@ export default function Opisy() {
           bundle={selectedBundle}
           generated={generated}
           onClose={() => setSelectedBundle(null)}
-          onSelectChild={child => { setSelectedBundle(null); setSelectedItem(child) }}
+          onSelectChild={handleSelectChild}
         />
       )}
     </div>

@@ -22,6 +22,7 @@ interface XlsRow {
   category: string | null
   purchase_price: number
   purchase_date: string
+  received_date: string | null
   sale_price: number | null
   sale_date: string | null
   status: 'IN_STOCK' | 'SOLD'
@@ -92,6 +93,12 @@ export default function Settings() {
 
   // ── backup export (XLS) ────────────────────────────────────────────────────
 
+  function itemStatus(item: Item): string {
+    if (item.status === 'SOLD') return 'Sprzedane'
+    if (!item.received_date || new Date(item.received_date) > new Date()) return 'W dostawie'
+    return 'W magazynie'
+  }
+
   function handleExport() {
     const rows = allItems.map((item: Item) => ({
       'Nazwa':                 item.title,
@@ -100,7 +107,7 @@ export default function Settings() {
       'Data zakupu':           item.purchase_date,
       'Cena sprzedaży (PLN)': item.sale_price ?? '',
       'Data sprzedaży':        item.sale_date ?? '',
-      'Status':                item.status === 'IN_STOCK' ? 'W magazynie' : 'Sprzedane',
+      'Status':                itemStatus(item),
     }))
 
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -135,6 +142,7 @@ export default function Settings() {
                               : null,
             sale_date:      r['Data sprzedaży'] ? String(r['Data sprzedaży']).trim() : null,
             status:         (String(r['Status']) === 'Sprzedane' ? 'SOLD' : 'IN_STOCK') as 'IN_STOCK' | 'SOLD',
+            received_date:  String(r['Status']) === 'W dostawie' ? null : (r['Data zakupu'] ? String(r['Data zakupu']).trim() : null),
           }))
           .filter(r => r.title.length > 0)
 
@@ -174,7 +182,7 @@ export default function Settings() {
         photo_path:                   null,
         purchase_price:               row.purchase_price,
         purchase_date:                row.purchase_date,
-        received_date:                null,
+        received_date:                row.received_date,
         purchase_source:              null,
         status:                       row.status,
         sale_price:                   row.sale_price,

@@ -395,7 +395,7 @@ function BundleCard({
 
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
               {delivering
-                ? <>Zakup: {formatDate(item.purchase_date)}{item.received_date ? <> · dostawa: {formatDate(item.received_date)}</> : null}</>
+                ? <>Zakup: {formatDate(item.purchase_date)}</>
                 : <>{formatDate(item.received_date ?? item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.</>
               }
             </p>
@@ -499,7 +499,7 @@ function RegularCard({
 
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             {delivering
-              ? <>Zakup: {formatDate(item.purchase_date)} · dostawa: {formatDate(item.received_date!)}</>
+              ? <>Zakup: {formatDate(item.purchase_date)}</>
               : <>{formatDate(item.received_date ?? item.purchase_date)} · {days} {days === 1 ? 'dzień' : 'dni'} w mag.</>
             }
           </p>
