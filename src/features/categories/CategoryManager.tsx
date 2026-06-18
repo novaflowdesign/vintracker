@@ -213,7 +213,7 @@ function FieldForm({
 
 // ── single field row ──────────────────────────────────────────────────────────
 
-function FieldRow({ field, categoryId }: { field: CategoryField; categoryId: string }) {
+function FieldRow({ field }: { field: CategoryField }) {
   const [editing, setEditing] = useState(false)
   const update = useUpdateCategoryField()
   const remove = useDeleteCategoryField()
@@ -303,7 +303,7 @@ function CategoryFields({ category }: { category: Category }) {
   return (
     <div className="pl-2 pt-2 space-y-1.5">
       {fields.map(f => (
-        <FieldRow key={f.id} field={f} categoryId={category.id} />
+        <FieldRow key={f.id} field={f} />
       ))}
 
       {adding ? (
